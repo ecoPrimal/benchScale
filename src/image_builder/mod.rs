@@ -66,6 +66,7 @@ use crate::backend::LibvirtBackend;
 /// let builder = ImageBuilder::new("my-image", backend)?;
 /// ```
 pub struct ImageBuilder {
+    #[expect(dead_code, reason = "read by display/debug when builder is logged")]
     pub(crate) name: String,
     pub(crate) base_image: Option<PathBuf>,
     pub(crate) memory_mb: u32,
@@ -73,6 +74,7 @@ pub struct ImageBuilder {
     pub(crate) disk_size_gb: u32,
     pub(crate) steps: Vec<BuildStep>,
     pub(crate) cloud_init: Option<CloudInit>,
+    #[expect(dead_code, reason = "stored for execute phase — build steps dispatch through backend")]
     pub(crate) backend: Arc<dyn Backend>,
 }
 

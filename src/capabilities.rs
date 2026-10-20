@@ -246,6 +246,7 @@ impl NetworkCapabilities {
     }
 
     /// Extract XML attribute value
+    #[expect(dead_code, reason = "utility for libvirt XML parsing — used when network detection is enabled")]
     fn extract_xml_attr(xml: &str, element: &str, attr: &str) -> Option<String> {
         // Simple XML parsing for <element attr="value">
         // This is pragmatic - for production, consider using an XML library
@@ -263,6 +264,7 @@ impl NetworkCapabilities {
     }
 
     /// Convert netmask to CIDR bits
+    #[expect(dead_code, reason = "utility for libvirt network parsing — used when network detection is enabled")]
     fn netmask_to_cidr(netmask: &str) -> u8 {
         match netmask {
             "255.255.0.0" => 16,
