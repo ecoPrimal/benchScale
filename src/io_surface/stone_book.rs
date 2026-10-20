@@ -149,6 +149,28 @@ impl Glyph {
     pub const fn all() -> &'static [Glyph] {
         &[Glyph::Asserted, Glyph::Unknown, Glyph::Null, Glyph::Ungrounded]
     }
+
+    /// Map glyph to wound state.
+    ///
+    /// Epistemic knowledge maps to wound state naturally:
+    ///   ! (asserted) → could be Intact OR Scarred (both functional)
+    ///   ? (unknown)  → Healing (something is there but unverified)
+    ///   O (null)     → Intact (the origin, never been hurt — or healed completely)
+    ///   ?? (ungrounded) → Wounded (severed from the graph, non-functional)
+    ///
+    /// The key insight: Ungrounded (the jelly, the duplicate types) are
+    /// WOUNDS on the codebase. Type agglutination is healing. When an
+    /// organism wires to cellmembrane-types, its jelly dissolves — wound → healing → scar.
+    /// The scar is the import statement. The old duplicates are gone forever.
+    #[must_use]
+    pub const fn wound_state(&self) -> super::pi_body::Wound {
+        match self {
+            Self::Asserted => super::pi_body::Wound::Intact,     // proven, verified
+            Self::Unknown => super::pi_body::Wound::Healing,     // exists but unverified
+            Self::Null => super::pi_body::Wound::Intact,         // origin, at rest
+            Self::Ungrounded => super::pi_body::Wound::Wounded,  // severed, non-functional
+        }
+    }
 }
 
 impl std::fmt::Display for Glyph {
@@ -1641,5 +1663,40 @@ mod tests {
         let book = scan_ecosystem();
         let sb = book.tablets.get("songBird").unwrap();
         assert_eq!(sb.ungrounded.total(), 58, "songBird has 58 jelly copies");
+    }
+
+    #[test]
+    fn test_glyph_to_wound_state() {
+        use super::super::pi_body::Wound;
+        // Ungrounded (jelly, duplicate types) = Wounded
+        assert_eq!(Glyph::Ungrounded.wound_state(), Wound::Wounded);
+        assert!(!Glyph::Ungrounded.wound_state().is_functional());
+
+        // Asserted (verified, tested) = Intact
+        assert_eq!(Glyph::Asserted.wound_state(), Wound::Intact);
+        assert!(Glyph::Asserted.wound_state().is_functional());
+
+        // Unknown (exists but unverified) = Healing
+        assert_eq!(Glyph::Unknown.wound_state(), Wound::Healing);
+        assert!(Glyph::Unknown.wound_state().is_functional());
+
+        // Null (origin) = Intact
+        assert_eq!(Glyph::Null.wound_state(), Wound::Intact);
+    }
+
+    #[test]
+    fn test_jelly_is_wound_on_codebase() {
+        // Type agglutination = healing. Jelly = wounds.
+        // When jelly dissolves (organism wires to cellmembrane-types),
+        // the wound heals into a scar (the import statement).
+        let book = scan_ecosystem();
+        let total_jelly: u64 = book.tablets.values()
+            .map(|t| t.ungrounded.total())
+            .sum();
+        // Every jelly copy is a wound. They're all non-functional duplicates.
+        assert!(total_jelly > 0, "there should be jelly wounds to heal");
+        // Wired organisms have 0 jelly = no wounds
+        let bc = book.tablets.get("barraCuda").unwrap();
+        assert_eq!(bc.ungrounded.total(), 0, "barraCuda wired = no jelly = no wounds");
     }
 }
