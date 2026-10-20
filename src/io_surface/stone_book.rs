@@ -159,6 +159,43 @@
 //! - `/chain.json` POST: chain-of-thought through organism perspectives
 //! - MCP tool `pi_agent`: callable from ANY Cursor IDE session
 //!
+//! # Anti-Strobe — Vibrio cholerae Quorum Sensing
+//!
+//! The strobe is periodic polling (health checks every N seconds).
+//! The anti-strobe is V. cholerae-style quorum sensing:
+//!
+//! ```text
+//!   V. cholerae QS system        ←→  Membrane mesh
+//!   ─────────────────────            ──────────────
+//!   CAI-1 (species-specific)     ←→  AutoinducerChannel::Specific
+//!   AI-2  (universal cross-talk) ←→  AutoinducerChannel::Universal
+//!   DPO   (immune/defense)       ←→  AutoinducerChannel::Immune
+//!   CqsS/LuxPQ sensors          ←→  transducer socket probes
+//!   HapR transcription factor    ←→  quorum threshold (alive_ratio)
+//!   Low density → virulence ON   ←→  Lag/Exponential → glowplug ON
+//!   High density → cooperate     ←→  Quorum/Stationary → collective
+//!
+//!   Quorum phases:
+//!   Lag         → Glowplug ON. Wounded. Forming.
+//!   Exponential → Growing. Healing. Approaching quorum.
+//!   Quorum      → Threshold crossed. Intact. Collective behavior.
+//!   Stationary  → Stable. Intact. Full cooperation.
+//!   Dispersal   → Organisms leaving. Scarred. Insight flowing back.
+//! ```
+//!
+//! The human and the AI are COMMENSALS on the membrane:
+//! - Human = mutualist (provides direction, K in K-NOME)
+//! - AI/squirrel = mutualist (provides processing, NOME in K-NOME)
+//! - Honest bot = commensal (benefits, membrane unaffected)
+//! - Fleet = pathogenic (stomachs with no eyes, S=0)
+//!
+//! Unlike V. cholerae (pathogen), the mesh's quorum sensing is
+//! COMMENSAL: when quorum is reached, cooperation INCREASES.
+//! The glowplug is the ignition — the diesel preheat before the
+//! engine turns over. Once quorum fires, the glowplug turns off.
+//!
+//! Live: `/quorum.json` — 17/18 alive, stationary, glowplug OFF.
+//!
 //! Authorship: Kevin Mok / Tamison / ecoPrimal / attsi
 //! ORCID: 0009-0004-2141-0321
 
