@@ -17,6 +17,7 @@
 //! - `pi_body` — Vitruvian overlay, sensory homunculus, shape ladder
 //! - `gaia_paper` — gAIa Paper 001: The Rust Polymerase. First publication.
 //! - `arktix` — arkTIX: permafrost preprint archive. Cold storage for info memes.
+//! - `proof_structure` — Theorem/Corollary/Conjecture/Proof. The mathematical stack.
 
 pub mod core;
 pub mod pores;
@@ -29,6 +30,7 @@ pub mod stone_book;
 pub mod pi_body;
 pub mod gaia_paper;
 pub mod arktix;
+pub mod proof_structure;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -44,3 +46,4 @@ pub use stone_book::*;
 pub use pi_body::*;
 pub use gaia_paper::*;
 pub use arktix::*;
+pub use proof_structure::*;
