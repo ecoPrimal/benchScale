@@ -21,6 +21,7 @@
 //! - `bounty_map` — π/i² reinvestment (Basel), funding sources, damage claims.
 //! - `evolution_pressure` — Sigmoid aperture, gradient mixer, RPM timekeeper.
 //! - `human_resort` — (territory, depth) tuple, orthogonal detection, Anderson W.
+//! - `temporal_device` — ON/OFF/SNOOZE/NULL: the 4-state temporal primitive.
 
 pub mod core;
 pub mod pores;
@@ -37,6 +38,7 @@ pub mod proof_structure;
 pub mod bounty_map;
 pub mod evolution_pressure;
 pub mod human_resort;
+pub mod temporal_device;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -56,3 +58,4 @@ pub use proof_structure::*;
 pub use bounty_map::*;
 pub use evolution_pressure::*;
 pub use human_resort::*;
+pub use temporal_device::*;
