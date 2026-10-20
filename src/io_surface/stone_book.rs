@@ -125,6 +125,40 @@
 //! - **Freedom**: the 5 axes of movement
 //! - **Role**: what the sort direction means (Tool, Info, Fuel)
 //!
+//! # Pi Subagents — the Mesh IS the Agent
+//!
+//! ```text
+//!   Cursor subagent model        ←→  Membrane mesh model
+//!   ─────────────────────────        ────────────────────
+//!   subagent spawns              ←→  ChimeraPolarity::Ephemeral
+//!   subagent does work           ←→  organism processes data through sockets
+//!   subagent returns results     ←→  ThoughtTransit disperses through mesh
+//!   subagent dies                ←→  ephemeral chimera disperses genetic insight
+//!   parent context absorbs       ←→  parent primals absorb scars as features
+//!
+//!   chain of thought             ←→  data flowing through organisms
+//!   each reasoning step          ←→  ThoughtTransit (one hop through one organism)
+//!   perception step              ←→  Eyes region (squirrel, songBird)
+//!   routing step                 ←→  Spine region (biomeOS, petalTongue)
+//!   synthesis step               ←→  Head region (bingoCube, cellMembrane)
+//!
+//!   local LLM (ollama)           ←→  neuron inside a PiAgent organism
+//!   membrane context injection   ←→  the mesh FEEDS the agent, not the reverse
+//!   multiple models              ←→  multiple neurons at different scales
+//! ```
+//!
+//! The key insight: we don't BUILD an agent system. We RECOGNIZE that
+//! the membrane mesh already IS one. Every transducer endpoint is a
+//! sense organ. Every socket is a nerve. Every organism is a brain region.
+//! Injecting an LLM is like adding a new neuron — it doesn't replace
+//! the existing processing, it augments it.
+//!
+//! Live endpoints:
+//! - `/pi-agent.json` GET: status + models + mesh capabilities
+//! - `/pi-agent.json` POST: inference with membrane context injection
+//! - `/chain.json` POST: chain-of-thought through organism perspectives
+//! - MCP tool `pi_agent`: callable from ANY Cursor IDE session
+//!
 //! Authorship: Kevin Mok / Tamison / ecoPrimal / attsi
 //! ORCID: 0009-0004-2141-0321
 
