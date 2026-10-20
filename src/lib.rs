@@ -75,6 +75,10 @@ pub mod constants;
 pub mod deploy;
 pub mod error;
 pub mod image_builder;
+/// I/O Surface Model — every device is just a channel, not a category.
+/// A microphone is a speaker from the other side. The membrane probes
+/// what's there and adapts.
+pub mod io_surface;
 pub mod lab;
 pub mod network;
 pub mod scenarios;
@@ -105,6 +109,25 @@ pub use backend::gpu_lifecycle::{
 #[cfg(feature = "libvirt")]
 pub use backend::ssh::SshClient;
 pub use error::{Error, Result};
+pub use io_surface::{
+    IoChannel, IoSurface, IoPore, ChannelDirection, ChannelMedium, MirrorPair,
+    MirrorChirality, ReflectionAngle, ReflectionView, collapse_to_pores,
+    MembraneLayer, SitePore, BINGO_EPITOPES, site_pore_map, site_bingo_cell,
+    PoreDepthLevel, FeedPoreMapping, feed_pore_map, feed_depth, pore_max_depth,
+    pore_feeds_at_depth,
+    EARTH_RADIUS_KM, SPEED_OF_LIGHT_KMS, HALF_EARTH_KM, PHOTON_HALF_EARTH_S,
+    LandmarkKind, Landmark, PhotonLine, angular_distance, photon_line, landmarks,
+    orient_from,
+    ClimatePhase, ShapingForce, GeoPeriod, FormationEvent,
+    geo_periods, teton_formation, landmarks_with_tetons, trace_formation,
+    phase_counts, time_depth, climate_rhythm,
+    Gear, CnsType, Surface, SurfaceFeed, GearShift,
+    surfaces, surface_feeds, gear_shifts, topo_sorted, surface_by_id,
+    surfaces_by_gear, surfaces_by_cns, gear_shift_needed, is_black_hole,
+    upstream, downstream,
+    RingTier, Ring, ring_layout, grinding_pairs, topo_sort_rings, angular_momentum,
+    BusTier, cns_to_bus_tier, aperture, gradient_pressure, should_fire, surfaces_by_bus_tier,
+};
 pub use image_builder::{BuildResult, BuildStep, ImageBuilder};
 pub use lab::{BackendType, Lab, LabHandle, LabMetadata, LabRegistry, LabStatus};
 pub use network::{NetworkConditions, NetworkSimulator};
