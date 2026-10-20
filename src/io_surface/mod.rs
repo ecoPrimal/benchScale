@@ -16,6 +16,7 @@
 //! - `stone_book` — Glyph, Tally, Tablet, StoneBook. Totality ledger.
 //! - `pi_body` — Vitruvian overlay, sensory homunculus, shape ladder
 //! - `gaia_paper` — gAIa Paper 001: The Rust Polymerase. First publication.
+//! - `arktix` — arkTIX: permafrost preprint archive. Cold storage for info memes.
 
 pub mod core;
 pub mod pores;
@@ -27,6 +28,7 @@ pub mod cns;
 pub mod stone_book;
 pub mod pi_body;
 pub mod gaia_paper;
+pub mod arktix;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -41,3 +43,4 @@ pub use cns::*;
 pub use stone_book::*;
 pub use pi_body::*;
 pub use gaia_paper::*;
+pub use arktix::*;
