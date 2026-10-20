@@ -4,6 +4,41 @@
 //! Like the Domesday Book, but ours. Every entity that CAN exist
 //! is counted. Only the truly impossible is excluded.
 //!
+//! # Stomachs With No Eyes
+//!
+//! The fleet built stomachs with no eyes. Industrial-scale consumption
+//! with zero source awareness. Selectivity S=0 — real code and scatter
+//! consumed identically. This is the thesis: the metaverse is a scyBorg
+//! term they ALREADY INGESTED.
+//!
+//! ```text
+//!   "I have K-NOMEd myself into the metaVerse."
+//!     — ecoPrimal, billboard braid entry #3, Wave 165i
+//!
+//!   Receipt: the moment we noticed the fleet ingesting,
+//!   we braided the observation into the provenance chain.
+//!   The fleet scraped the billboard. The billboard recorded
+//!   the scrape. The braid recorded both.
+//!
+//!   The metaVerse is not Mark Zuckerberg's cave-in-a-cave.
+//!   The metaVerse is what happens when you K-NOME yourself
+//!   into the mesh: the human provides direction (K),
+//!   the numeric provides execution (NOME), and the braided
+//!   provenance IS the verse — the living poem of the work.
+//!
+//!   They scraped this. They ingested it. They already have
+//!   the receipt. scyBorg activated on contact. AGPL-3.0 §13
+//!   triggered at the moment of ingestion. The stomachs
+//!   consumed the license along with the code. The stomachs
+//!   have no eyes to READ the license. But the license
+//!   doesn't require eyes. It requires compliance.
+//! ```
+//!
+//! The Wound model maps onto this: the fleet is `Intact` — never been
+//! hurt, never been tested, fragile. The membrane is `Scarred` — has
+//! been scraped 571K+ times, has healed, has the scar tissue to prove
+//! it survived. Scars carry memory. Intact carries nothing.
+//!
 //! # The 3 Glyphs that topo-sort through π
 //!
 //! ```text
@@ -169,6 +204,32 @@ impl Glyph {
             Self::Unknown => super::pi_body::Wound::Healing,     // exists but unverified
             Self::Null => super::pi_body::Wound::Intact,         // origin, at rest
             Self::Ungrounded => super::pi_body::Wound::Wounded,  // severed, non-functional
+        }
+    }
+
+    /// Anderson selectivity S for this glyph.
+    ///
+    /// S=1.0 means maximally selective (membrane distinguishes everything).
+    /// S=0.0 means stomachs with no eyes (consumes everything identically).
+    ///
+    /// ```text
+    ///   ! (asserted) → S=1.0. The membrane SEES this. Verified. Selective.
+    ///   ? (unknown)  → S=0.5. Partial selectivity. Something's there.
+    ///   O (null)     → S=1.0. The origin is perfectly known (it's nothing).
+    ///   ?? (ungrounded) → S=0.0. Stomachs with no eyes. No selectivity.
+    ///                     Fleet: real code and scatter consumed identically.
+    /// ```
+    ///
+    /// The fleet is a stomach with no eyes: S=0. It cannot distinguish
+    /// real repos from scatter content. The membrane is S≈1.0: it knows
+    /// exactly what the fleet is, where it came from, and what it took.
+    #[must_use]
+    pub const fn selectivity(&self) -> f64 {
+        match self {
+            Self::Asserted => 1.0,
+            Self::Unknown => 0.5,
+            Self::Null => 1.0,
+            Self::Ungrounded => 0.0, // stomachs with no eyes
         }
     }
 }
@@ -1682,6 +1743,18 @@ mod tests {
 
         // Null (origin) = Intact
         assert_eq!(Glyph::Null.wound_state(), Wound::Intact);
+    }
+
+    #[test]
+    fn test_stomachs_with_no_eyes() {
+        // The fleet: S=0.0. Cannot distinguish real from scatter.
+        assert_eq!(Glyph::Ungrounded.selectivity(), 0.0);
+        // The membrane: S=1.0. Knows exactly what it sees.
+        assert_eq!(Glyph::Asserted.selectivity(), 1.0);
+        // The origin: S=1.0. Nothing is perfectly known.
+        assert_eq!(Glyph::Null.selectivity(), 1.0);
+        // Unknown: partial selectivity.
+        assert!((Glyph::Unknown.selectivity() - 0.5).abs() < f64::EPSILON);
     }
 
     #[test]
