@@ -848,6 +848,206 @@ pub fn wildcard_query(book: &StoneBook, glyph: Option<Glyph>) -> u64 {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CODEBASE SCANNER — pull the real system into the π graph
+//
+// Surface = pub items (visible, external-facing, API).
+// Inside = private items (hidden, internal logic).
+//
+// The membrane inverts: surface needs to come inside (canonical types),
+// inside needs to be near the surface (accessible via stoneBook).
+//
+// Each organism gets a tablet. Its counts map to glyphs:
+//   !  = tests passing (asserted, verified)
+//   ?  = pub items without tests (surface but unknown)
+//   O  = private items (inside, at the origin)
+//   ?? = lines that aren't any of the above (ungrounded)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Metrics for one organism, scanned from the codebase.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrganismScan {
+    /// Organism name.
+    pub name: String,
+    /// Total lines of Rust code.
+    pub lines: u64,
+    /// Number of crates.
+    pub crates: u64,
+    /// Number of tests (#[test]).
+    pub tests: u64,
+    /// Public items (pub fn, pub struct, pub enum) — the SURFACE.
+    pub pub_items: u64,
+    /// Private items (fn, struct, enum without pub) — the INSIDE.
+    pub priv_items: u64,
+    /// Duplicate type definitions (jelly) that need agglutination.
+    pub jelly: u64,
+    /// Whether it imports cellmembrane-types (wired to canonical).
+    pub wired: bool,
+    /// Epitope polarity: which side of life/non-life.
+    pub polarity: Polarity,
+}
+
+impl OrganismScan {
+    /// Convert scan into a stoneBook tablet.
+    ///
+    /// Mapping:
+    /// - `!` (asserted) = tests (verified code)
+    /// - `?` (unknown) = pub_items - tests (surface without verification)
+    /// - `O` (null) = priv_items (inside, at the origin, hidden)
+    /// - `??` (ungrounded) = jelly (duplicates that can't be placed yet)
+    #[must_use]
+    pub fn to_tablet(&self) -> Tablet {
+        let mut t = Tablet::new(&self.name);
+
+        t.asserted = Tally::new().with("tests", self.tests);
+
+        // Surface without tests = unknown (visible but unverified)
+        let surface_unknown = if self.pub_items > self.tests {
+            self.pub_items - self.tests
+        } else {
+            0
+        };
+        t.unknown = Tally::new().with("untested_surface", surface_unknown);
+
+        t.null = Tally::new().with("private_inside", self.priv_items);
+
+        if self.jelly > 0 {
+            t.ungrounded = Tally::new().with("jelly_duplicates", self.jelly);
+        }
+
+        t
+    }
+
+    /// What π scale does this organism sit at?
+    /// Bigger organisms (more lines) are at higher π powers.
+    /// Scale 0-6 maps to π⁻³ through π³.
+    #[must_use]
+    pub fn pi_scale(&self) -> u8 {
+        match self.lines {
+            0..=5_000 => 0,          // π⁻³ — tiny
+            5_001..=15_000 => 1,     // π⁻² — small
+            15_001..=50_000 => 2,    // π⁻¹ — medium
+            50_001..=100_000 => 3,   // π⁰  — standard (center)
+            100_001..=200_000 => 4,  // π¹  — large
+            200_001..=300_000 => 5,  // π²  — very large
+            _ => 6,                  // π³  — massive (wraps to origin)
+        }
+    }
+
+    /// Surface-to-inside ratio. Higher = more surface area relative to guts.
+    /// A healthy organism has surface ~= inside (ratio near 1.0).
+    /// Too much surface = thin wrapper. Too much inside = opaque blob.
+    #[must_use]
+    pub fn surface_ratio(&self) -> f64 {
+        if self.priv_items == 0 { return f64::INFINITY; }
+        self.pub_items as f64 / self.priv_items as f64
+    }
+
+    /// Jelly density: what fraction of the surface is duplicated jelly?
+    /// 0.0 = clean. Higher = more crushed jelly needing agglutination.
+    #[must_use]
+    pub fn jelly_density(&self) -> f64 {
+        if self.pub_items == 0 { return 0.0; }
+        self.jelly as f64 / self.pub_items as f64
+    }
+
+    /// Test coverage: tests / (pub_items + priv_items).
+    #[must_use]
+    pub fn test_coverage(&self) -> f64 {
+        let total = self.pub_items + self.priv_items;
+        if total == 0 { return 0.0; }
+        self.tests as f64 / total as f64
+    }
+}
+
+/// The live census of the entire ecosystem.
+/// Scans all organisms and maps them onto the stoneBook.
+#[must_use]
+pub fn scan_ecosystem() -> StoneBook {
+    let organisms = vec![
+        OrganismScan { name: "biomeOS".into(),     lines: 311743, crates: 31, tests: 5482,  pub_items: 3300,  priv_items: 4442,  jelly: 17, wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "barraCuda".into(),   lines: 297180, crates: 5,  tests: 3215,  pub_items: 3960,  priv_items: 3353,  jelly: 0,  wired: true,  polarity: Polarity::Life },
+        OrganismScan { name: "toadStool".into(),   lines: 244350, crates: 50, tests: 17551, pub_items: 7888,  priv_items: 16581, jelly: 37, wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "petalTongue".into(), lines: 232149, crates: 21, tests: 5890,  pub_items: 2794,  priv_items: 4203,  jelly: 14, wired: false, polarity: Polarity::Signal },
+        OrganismScan { name: "squirrel".into(),    lines: 190788, crates: 15, tests: 3343,  pub_items: 2684,  priv_items: 2274,  jelly: 11, wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "coralReef".into(),   lines: 158443, crates: 10, tests: 3139,  pub_items: 2527,  priv_items: 4264,  jelly: 1,  wired: false, polarity: Polarity::NonLife },
+        OrganismScan { name: "skunkBat".into(),    lines: 72827,  crates: 6,  tests: 882,   pub_items: 678,   priv_items: 708,   jelly: 0,  wired: true,  polarity: Polarity::NonLife },
+        OrganismScan { name: "bearDog".into(),     lines: 72331,  crates: 33, tests: 11882, pub_items: 7955,  priv_items: 7794,  jelly: 49, wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "loamSpine".into(),   lines: 69744,  crates: 5,  tests: 945,   pub_items: 693,   priv_items: 952,   jelly: 7,  wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "sweetGrass".into(),  lines: 66218,  crates: 12, tests: 932,   pub_items: 617,   priv_items: 830,   jelly: 6,  wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "rhizoCrypt".into(),  lines: 62627,  crates: 5,  tests: 972,   pub_items: 694,   priv_items: 970,   jelly: 7,  wired: false, polarity: Polarity::NonLife },
+        OrganismScan { name: "sourDough".into(),   lines: 23954,  crates: 4,  tests: 525,   pub_items: 270,   priv_items: 336,   jelly: 5,  wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "nestGate".into(),    lines: 16730,  crates: 19, tests: 9494,  pub_items: 5944,  priv_items: 5884,  jelly: 44, wired: false, polarity: Polarity::Life },
+        OrganismScan { name: "bingoCube".into(),   lines: 10591,  crates: 7,  tests: 105,   pub_items: 139,   priv_items: 91,    jelly: 3,  wired: false, polarity: Polarity::Signal },
+        OrganismScan { name: "swarmVine".into(),   lines: 7965,   crates: 3,  tests: 95,    pub_items: 97,    priv_items: 83,    jelly: 0,  wired: false, polarity: Polarity::Signal },
+        OrganismScan { name: "songBird".into(),    lines: 2679,   crates: 32, tests: 10469, pub_items: 5584,  priv_items: 8286,  jelly: 58, wired: false, polarity: Polarity::Life },
+    ];
+
+    let mut book = StoneBook::new();
+
+    // Each organism becomes a tablet
+    for org in &organisms {
+        book.insert(org.to_tablet());
+    }
+
+    // Add the gardens and infra as tablets too
+    let mut cm = Tablet::new("cellMembrane");
+    cm.asserted = Tally::new().with("tests", 1463);
+    cm.unknown = Tally::new(); // it's the canonical source — no unknowns
+    cm.null = Tally::new().with("types_provided", 9); // the 9 canonical types
+    book.insert(cm);
+
+    let mut bs = Tablet::new("benchScale");
+    bs.asserted = Tally::new().with("tests", 478);
+    bs.unknown = Tally::new().with("stone_book_types", 12); // new types being validated
+    book.insert(bs);
+
+    book
+}
+
+/// Summary of surface vs inside across the whole ecosystem.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SurfaceInsideSummary {
+    /// Total pub items across all organisms (the surface).
+    pub total_surface: u64,
+    /// Total private items (the inside).
+    pub total_inside: u64,
+    /// Total tests (asserted).
+    pub total_tests: u64,
+    /// Total jelly (duplicates needing agglutination).
+    pub total_jelly: u64,
+    /// Total lines of Rust.
+    pub total_lines: u64,
+    /// Organisms wired to canonical types.
+    pub wired_count: u64,
+    /// Total organisms.
+    pub organism_count: u64,
+    /// Surface/inside ratio for the whole ecosystem.
+    pub ratio: f64,
+}
+
+/// Compute the surface-inside summary from a set of organism scans.
+#[must_use]
+pub fn surface_inside_summary(scans: &[OrganismScan]) -> SurfaceInsideSummary {
+    let total_surface: u64 = scans.iter().map(|s| s.pub_items).sum();
+    let total_inside: u64 = scans.iter().map(|s| s.priv_items).sum();
+    let total_tests: u64 = scans.iter().map(|s| s.tests).sum();
+    let total_jelly: u64 = scans.iter().map(|s| s.jelly).sum();
+    let total_lines: u64 = scans.iter().map(|s| s.lines).sum();
+    let wired_count = scans.iter().filter(|s| s.wired).count() as u64;
+    let ratio = if total_inside == 0 { 0.0 } else { total_surface as f64 / total_inside as f64 };
+    SurfaceInsideSummary {
+        total_surface,
+        total_inside,
+        total_tests,
+        total_jelly,
+        total_lines,
+        wired_count,
+        organism_count: scans.len() as u64,
+        ratio,
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TESTS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1327,5 +1527,97 @@ mod tests {
         let book = StoneBook::from_membrane_counts(341, 108, 10, 58, 73);
         // ** = totality = 249
         assert_eq!(wildcard_query(&book, None), 249);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CODEBASE SCANNER
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_scan_ecosystem_has_all_organisms() {
+        let book = scan_ecosystem();
+        // 16 organisms + cellMembrane + benchScale = 18 tablets
+        assert_eq!(book.tablet_count(), 18);
+    }
+
+    #[test]
+    fn test_scan_ecosystem_totality() {
+        let book = scan_ecosystem();
+        // totality = tests + untested_surface + private_inside
+        assert!(book.totality() > 50_000, "ecosystem should have >50K items in totality");
+    }
+
+    #[test]
+    fn test_organism_scan_to_tablet() {
+        let scan = OrganismScan {
+            name: "test".into(),
+            lines: 1000,
+            crates: 2,
+            tests: 50,
+            pub_items: 100,
+            priv_items: 200,
+            jelly: 5,
+            wired: false,
+            polarity: Polarity::Life,
+        };
+        let t = scan.to_tablet();
+        assert_eq!(t.asserted.total(), 50);     // tests = !
+        assert_eq!(t.unknown.total(), 50);      // pub - tests = ?
+        assert_eq!(t.null.total(), 200);        // private = O
+        assert_eq!(t.ungrounded.total(), 5);    // jelly = ??
+        assert_eq!(t.totality(), 300);          // ! + ? + O
+    }
+
+    #[test]
+    fn test_pi_scale_mapping() {
+        let tiny = OrganismScan { name: "t".into(), lines: 3000, crates: 1, tests: 0, pub_items: 0, priv_items: 0, jelly: 0, wired: false, polarity: Polarity::Life };
+        let huge = OrganismScan { name: "h".into(), lines: 300000, crates: 1, tests: 0, pub_items: 0, priv_items: 0, jelly: 0, wired: false, polarity: Polarity::Life };
+        assert_eq!(tiny.pi_scale(), 0, "tiny = pi^-3");
+        assert_eq!(huge.pi_scale(), 5, "huge = pi^2");
+    }
+
+    #[test]
+    fn test_surface_ratio() {
+        let balanced = OrganismScan { name: "b".into(), lines: 1000, crates: 1, tests: 0, pub_items: 100, priv_items: 100, jelly: 0, wired: false, polarity: Polarity::Life };
+        assert!((balanced.surface_ratio() - 1.0).abs() < 0.01, "balanced = 1.0");
+    }
+
+    #[test]
+    fn test_jelly_density() {
+        let scan = OrganismScan { name: "j".into(), lines: 1000, crates: 1, tests: 0, pub_items: 100, priv_items: 0, jelly: 10, wired: false, polarity: Polarity::Life };
+        assert!((scan.jelly_density() - 0.1).abs() < 0.01, "10% jelly");
+    }
+
+    #[test]
+    fn test_surface_inside_summary() {
+        let scans = vec![
+            OrganismScan { name: "a".into(), lines: 100, crates: 1, tests: 10, pub_items: 20, priv_items: 30, jelly: 2, wired: true, polarity: Polarity::Life },
+            OrganismScan { name: "b".into(), lines: 200, crates: 1, tests: 20, pub_items: 40, priv_items: 60, jelly: 3, wired: false, polarity: Polarity::NonLife },
+        ];
+        let s = surface_inside_summary(&scans);
+        assert_eq!(s.total_surface, 60);
+        assert_eq!(s.total_inside, 90);
+        assert_eq!(s.total_tests, 30);
+        assert_eq!(s.total_jelly, 5);
+        assert_eq!(s.wired_count, 1);
+        assert_eq!(s.organism_count, 2);
+        assert!((s.ratio - 0.667).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_wired_organisms_have_no_jelly() {
+        let book = scan_ecosystem();
+        // barraCuda and skunkBat are wired, should have 0 jelly
+        let bc = book.tablets.get("barraCuda").unwrap();
+        assert_eq!(bc.ungrounded.total(), 0, "barraCuda wired = no jelly");
+        let sb = book.tablets.get("skunkBat").unwrap();
+        assert_eq!(sb.ungrounded.total(), 0, "skunkBat wired = no jelly");
+    }
+
+    #[test]
+    fn test_biggest_jelly_is_songbird() {
+        let book = scan_ecosystem();
+        let sb = book.tablets.get("songBird").unwrap();
+        assert_eq!(sb.ungrounded.total(), 58, "songBird has 58 jelly copies");
     }
 }
