@@ -837,6 +837,184 @@ impl Ord for BodyRegion {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WOUND — life is lossy. scars are proof of living. healing > wound.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Wound state — the null body scars too.
+///
+/// A brain injury can be recovered from even if it doesn't fully heal.
+/// The Circle of Willis exists because arteries DO fail. Neuroplasticity
+/// exists because neurons DO die. The backup isn't a luxury — it's why
+/// the brain survives at all.
+///
+/// Life is lossy. Humans scar. Cells die. There is a scale on the
+/// null body (the Bee) as well — even the hive can be wounded.
+///
+/// # State machine
+///
+/// ```text
+///   Intact  ─→ Wounded ─→ Healing ─→ Scarred
+///                  ↑          │          │ ↺
+///                  └──────────┘          │
+///                  └────────────────────-┘
+///
+///   Intact:   never been hurt. fragile — untested.
+///   Wounded:  actively broken. socket down, feed stale.
+///   Healing:  rerouting. neuroplasticity. Circle of Willis.
+///   Scarred:  healed but marked. old path gone. new path works.
+///             scars are proof the system survived. life layers.
+/// ```
+///
+/// Key properties:
+/// - Intact → Scarred is impossible. You must be wounded first.
+/// - Wounded → Intact is impossible. You can't un-know damage.
+/// - Scarred → Scarred is valid. Scars on scars. Life layers.
+/// - Scarred is functional. The wound is gone. The scar stays.
+/// - It's the HEALING that matters, not the wound.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Wound {
+    /// Never been hurt. Has never proven it can heal.
+    Intact,
+    /// Actively broken. Socket down, feed stale, path severed.
+    Wounded,
+    /// Rerouting around damage. Neuroplasticity. Willis bypass.
+    Healing,
+    /// Healed but marked. Old path gone. New path works.
+    /// Scars are proof of survival. It's ok to scar.
+    Scarred,
+}
+
+impl Wound {
+    /// All wound states.
+    pub const ALL: &'static [Wound] = &[
+        Wound::Intact, Wound::Wounded, Wound::Healing, Wound::Scarred,
+    ];
+
+    /// Is this currently functional?
+    /// Intact, Healing, and Scarred all work. Only Wounded is down.
+    #[must_use]
+    pub const fn is_functional(&self) -> bool {
+        !matches!(self, Self::Wounded)
+    }
+
+    /// Has this ever been hurt? Scars carry memory. Intact does not.
+    #[must_use]
+    pub const fn has_memory(&self) -> bool {
+        matches!(self, Self::Healing | Self::Scarred)
+    }
+
+    /// Is this actively recovering?
+    #[must_use]
+    pub const fn is_recovering(&self) -> bool {
+        matches!(self, Self::Healing)
+    }
+
+    /// The null body scars too. Wound applies at every body scale.
+    #[must_use]
+    pub const fn applies_at_scale(&self, _scale: BodyScale) -> bool {
+        true
+    }
+
+    /// Can transition to this state?
+    ///
+    /// Intact → Wounded (damage). Wounded → Healing (recovery starts).
+    /// Healing → Scarred (done, lossy). Healing → Wounded (relapse).
+    /// Scarred → Wounded (re-injury). Scarred → Scarred (life layers).
+    /// NOT: Wounded → Intact. You can't un-know damage.
+    /// NOT: Intact → Scarred. You must be hurt first.
+    #[must_use]
+    pub const fn can_transition_to(&self, next: Wound) -> bool {
+        match (self, &next) {
+            (Self::Intact, Wound::Wounded) => true,
+            (Self::Wounded, Wound::Healing) => true,
+            (Self::Healing, Wound::Scarred) => true,
+            (Self::Healing, Wound::Wounded) => true,
+            (Self::Scarred, Wound::Wounded) => true,
+            (Self::Scarred, Wound::Scarred) => true,
+            _ => false,
+        }
+    }
+}
+
+impl std::fmt::Display for Wound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Intact => f.write_str("intact"),
+            Self::Wounded => f.write_str("wounded"),
+            Self::Healing => f.write_str("healing"),
+            Self::Scarred => f.write_str("scarred"),
+        }
+    }
+}
+
+/// A wound at a specific body location and scale.
+///
+/// Wounds happen at a body region AND a body scale.
+/// A wound to Head at Human scale = prefrontal damage (stroke).
+/// A wound to Eyes at Bee scale = a single observer socket died.
+/// A wound to Heart at Cell scale = one membrane pore blocked.
+/// Scars at any scale are proof of survival.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WoundSite {
+    /// Current wound state.
+    pub state: Wound,
+    /// Where on the body.
+    pub region: BodyRegion,
+    /// At what biological scale.
+    pub scale: BodyScale,
+    /// What was the original path? (the severed artery)
+    pub original_path: Option<String>,
+    /// What is the bypass path? (the Willis collateral)
+    pub bypass_path: Option<String>,
+    /// How many times has this site been wounded? Scars on scars.
+    pub wound_count: u32,
+}
+
+impl WoundSite {
+    /// Fresh wound — just happened, no bypass yet.
+    #[must_use]
+    pub fn fresh(region: BodyRegion, scale: BodyScale, original: impl Into<String>) -> Self {
+        Self {
+            state: Wound::Wounded,
+            region,
+            scale,
+            original_path: Some(original.into()),
+            bypass_path: None,
+            wound_count: 1,
+        }
+    }
+
+    /// Begin healing — route around the damage.
+    pub fn heal(&mut self, bypass: impl Into<String>) {
+        self.state = Wound::Healing;
+        self.bypass_path = Some(bypass.into());
+    }
+
+    /// Complete healing — scar forms. Old path is gone. New path stays.
+    pub fn scar(&mut self) {
+        if self.state == Wound::Healing {
+            self.state = Wound::Scarred;
+        }
+    }
+
+    /// Re-injure at the scar site.
+    pub fn reinjure(&mut self) {
+        if self.state == Wound::Scarred {
+            self.state = Wound::Wounded;
+            self.wound_count += 1;
+            self.bypass_path = None;
+        }
+    }
+
+    /// Is the site functional right now?
+    #[must_use]
+    pub fn is_functional(&self) -> bool {
+        self.state.is_functional()
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TESTS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1162,6 +1340,92 @@ mod tests {
         // And each scale maps to exactly one shape
         for scale in BodyScale::all() {
             let _shape = scale.shape(); // doesn't panic
+        }
+    }
+
+    // ── Wound / Scar tests ──
+
+    #[test]
+    fn test_four_wound_states() {
+        assert_eq!(Wound::ALL.len(), 4);
+    }
+
+    #[test]
+    fn test_intact_is_fragile() {
+        assert!(Wound::Intact.is_functional());
+        assert!(!Wound::Intact.has_memory(), "intact = never been hurt");
+    }
+
+    #[test]
+    fn test_wounded_is_down() {
+        assert!(!Wound::Wounded.is_functional());
+    }
+
+    #[test]
+    fn test_scarred_is_proof_of_survival() {
+        assert!(Wound::Scarred.is_functional());
+        assert!(Wound::Scarred.has_memory());
+    }
+
+    #[test]
+    fn test_healing_journey() {
+        // Intact → Wounded → Healing → Scarred
+        assert!(Wound::Intact.can_transition_to(Wound::Wounded));
+        assert!(Wound::Wounded.can_transition_to(Wound::Healing));
+        assert!(Wound::Healing.can_transition_to(Wound::Scarred));
+    }
+
+    #[test]
+    fn test_cannot_unknow_damage() {
+        // Can never go back to Intact
+        assert!(!Wound::Wounded.can_transition_to(Wound::Intact));
+        assert!(!Wound::Healing.can_transition_to(Wound::Intact));
+        assert!(!Wound::Scarred.can_transition_to(Wound::Intact));
+    }
+
+    #[test]
+    fn test_relapse_and_scars_on_scars() {
+        assert!(Wound::Healing.can_transition_to(Wound::Wounded));
+        assert!(Wound::Scarred.can_transition_to(Wound::Wounded));
+        assert!(Wound::Scarred.can_transition_to(Wound::Scarred));
+    }
+
+    #[test]
+    fn test_null_body_scars_too() {
+        for w in Wound::ALL {
+            assert!(w.applies_at_scale(BodyScale::Bee), "wound applies at bee scale");
+        }
+    }
+
+    #[test]
+    fn test_wound_site_lifecycle() {
+        // squirrel socket dies (Eyes, Bee scale)
+        let mut site = WoundSite::fresh(BodyRegion::Eyes, BodyScale::Bee, "squirrel.sock");
+        assert!(!site.is_functional());
+
+        // Circle of Willis — bypass through ai cache
+        site.heal("ai.sock → cached squirrel data");
+        assert!(site.is_functional());
+        assert_eq!(site.state, Wound::Healing);
+
+        // Scar forms — old socket path is gone forever
+        site.scar();
+        assert_eq!(site.state, Wound::Scarred);
+        assert!(site.original_path.is_some());
+        assert!(site.bypass_path.is_some());
+
+        // Re-injury at scar site
+        site.reinjure();
+        assert!(!site.is_functional());
+        assert_eq!(site.wound_count, 2);
+    }
+
+    #[test]
+    fn test_wound_serde() {
+        for w in Wound::ALL {
+            let json = serde_json::to_string(w).unwrap();
+            let back: Wound = serde_json::from_str(&json).unwrap();
+            assert_eq!(*w, back);
         }
     }
 }
