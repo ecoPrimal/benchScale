@@ -635,17 +635,24 @@ impl std::fmt::Display for CompoundGlyph {
 /// The first 4 are spatial/temporal (the tesseract).
 /// The 5th is epistemic (what you KNOW changes).
 /// Together they are the DNA — the encoding of all possible movement.
+///
+/// 3 of the 5 axes wrap (ouroboros). They are interlocked at the
+/// 3 null crossings = trefoil knot. Only tense is an arrow.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Freedom {
-    /// Movement along the scale axis (π⁻³ ↔ π³). The ouroboros.
+    /// Movement along the scale axis (π⁻³ ↔ π³). The first ouroboros.
     Scale,
-    /// Movement across the 7 epitope faces.
+    /// Movement along the epitope axis (life ↔ non-life). The second ouroboros.
+    /// Wraps at tuebor — the black hole where investigation is so deep
+    /// that life and non-life become indistinguishable.
     Epitope,
     /// Movement through the 3 null forms (knot crossings).
+    /// WHERE the 3 ouroboros snakes cross through each other.
     Null,
-    /// Movement through time (was → is → will_be). The tesseract.
+    /// Movement through time (was → is → will_be). The arrow.
+    /// The ONLY axis that doesn't wrap. Time flows.
     Tense,
-    /// Movement along the epistemic axis (! ↔ ? ↔ O). The DNA.
+    /// Movement along the epistemic axis (! ↔ ? ↔ O). The third ouroboros.
     Epistemic,
 }
 
@@ -675,14 +682,19 @@ impl Freedom {
     }
 
     /// Does this axis wrap (ouroboros) or is it linear?
+    ///
+    /// 3 axes wrap: scale, epitope, epistemic.
+    /// They are the 3 ouroboros snakes of the trefoil knot.
+    /// Null is where they cross (3 crossings = trefoil).
+    /// Tense is the only arrow — time doesn't loop.
     #[must_use]
     pub const fn wraps(&self) -> bool {
         match self {
-            Self::Scale => true,     // ouroboros — π³ wraps to π⁻³
-            Self::Epistemic => true, // ! → ? → O → ! (the cycle)
-            Self::Epitope => false,  // faces don't wrap
-            Self::Null => false,     // crossings don't wrap
-            Self::Tense => false,    // time is directional (arrow)
+            Self::Scale => true,     // ouroboros 1 — π³ wraps to π⁻³
+            Self::Epitope => true,   // ouroboros 2 — life wraps to non-life at tuebor
+            Self::Epistemic => true, // ouroboros 3 — ! → ? → O → !
+            Self::Null => false,     // not a loop — the CROSSINGS of the 3 loops
+            Self::Tense => false,    // the arrow of time — only axis that doesn't loop
         }
     }
 
@@ -704,6 +716,12 @@ impl Freedom {
         }
     }
 
+    /// The 3 wrapping axes (the 3 ouroboros snakes).
+    #[must_use]
+    pub const fn ouroboros_axes() -> &'static [Freedom] {
+        &[Freedom::Scale, Freedom::Epitope, Freedom::Epistemic]
+    }
+
     /// Total positions across all 5 axes.
     /// 7 × 7 × 3 × 3 × 3 = 1323 positions in the full 5D space.
     #[must_use]
@@ -715,6 +733,99 @@ impl Freedom {
 impl std::fmt::Display for Freedom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.label())
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EPITOPE POLARITY — life and non-life sort toward each other
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Polarity on the epitope axis — life vs non-life.
+///
+/// The epitope axis wraps (ouroboros). On one half: life.
+/// On the other half: non-life. They sort TOWARD each other.
+///
+/// - **Life** (positive): builds structure, produces INFO. The humans.
+///   investigation → science → membrane → signal (midpoint)
+///
+/// - **NonLife** (negative): consumes structure, eats negentropy. The fleet.
+///   other → immune → topology → signal (midpoint)
+///
+/// They meet at **signal** (the midpoint — where life and non-life
+/// exchange). They wrap at **tuebor** (the black hole — where
+/// investigation is so deep the distinction dissolves).
+///
+/// From live data: human 9.5% (life), fleet 90.5% (non-life).
+/// But in entities: human_ips 5,509 vs fleet_ips 6,393 — roughly equal.
+/// The fleet consumes 10× the bandwidth but has similar entity count.
+/// Non-life eats more per entity. It's a negentropy consumer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Polarity {
+    /// Life — builds structure, produces info. Sorts UP.
+    /// The humans, the investigators, the science.
+    Life,
+    /// NonLife — consumes structure, eats negentropy. Sorts DOWN.
+    /// The fleet, the crawlers, the scrapers.
+    NonLife,
+    /// Signal — the midpoint where life and non-life exchange.
+    /// Neither purely positive nor negative.
+    Signal,
+}
+
+impl Polarity {
+    /// Classify an epitope by its polarity.
+    ///
+    /// The 7 epitopes ordered on the wrapping axis:
+    /// ```text
+    ///   investigation → science → membrane → SIGNAL → topology → immune → other
+    ///         life ───────────────► midpoint ◄──────────────── non-life
+    ///                              │                              │
+    ///                              └──── wraps at tuebor ─────────┘
+    /// ```
+    #[must_use]
+    pub fn of_epitope(epitope: &str) -> Self {
+        match epitope {
+            "investigation" | "science" | "membrane" => Self::Life,
+            "signal" => Self::Signal,
+            "topology" | "immune" | "other" => Self::NonLife,
+            _ => Self::Signal, // unknown → midpoint
+        }
+    }
+
+    /// The corresponding compound glyph role.
+    #[must_use]
+    pub const fn role(&self) -> Role {
+        match self {
+            Self::Life => Role::Info,    // life builds structure
+            Self::NonLife => Role::Fuel, // non-life consumes structure
+            Self::Signal => Role::Tool,  // signal transforms/mediates
+        }
+    }
+
+    /// Distance from the midpoint (signal = 0, extremes = 3).
+    /// Life side is positive, non-life side is negative.
+    #[must_use]
+    pub fn of_epitope_index(index: u8) -> i8 {
+        match index {
+            0 => 3,   // investigation — furthest life
+            1 => 2,   // science
+            2 => 1,   // membrane
+            3 => 0,   // signal — midpoint
+            4 => -1,  // topology
+            5 => -2,  // immune
+            6 => -3,  // other — furthest non-life
+            _ => 0,
+        }
+    }
+}
+
+impl std::fmt::Display for Polarity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Life => write!(f, "life (+)"),
+            Self::NonLife => write!(f, "non-life (-)"),
+            Self::Signal => write!(f, "signal (0)"),
+        }
     }
 }
 
@@ -1090,12 +1201,37 @@ mod tests {
     }
 
     #[test]
-    fn test_two_axes_wrap() {
-        // Scale wraps (ouroboros) and epistemic wraps (! → ? → O → !)
+    fn test_three_axes_wrap() {
+        // 3 ouroboros snakes: scale, epitope, epistemic
         let wrapping: Vec<_> = Freedom::all().iter().filter(|f| f.wraps()).collect();
-        assert_eq!(wrapping.len(), 2);
+        assert_eq!(wrapping.len(), 3, "3 ouroboros (trefoil knot)");
         assert!(Freedom::Scale.wraps());
+        assert!(Freedom::Epitope.wraps());
         assert!(Freedom::Epistemic.wraps());
+    }
+
+    #[test]
+    fn test_null_is_the_crossings() {
+        // Null doesn't wrap — it's WHERE the 3 ouroboros cross
+        assert!(!Freedom::Null.wraps());
+        assert_eq!(Freedom::Null.cardinality(), 3, "3 crossings = trefoil");
+    }
+
+    #[test]
+    fn test_tense_is_only_arrow() {
+        // Time is the only axis that doesn't loop
+        let arrows: Vec<_> = Freedom::all().iter()
+            .filter(|f| !f.wraps() && **f != Freedom::Null)
+            .collect();
+        assert_eq!(arrows.len(), 1, "only tense is a pure arrow");
+        assert!(!Freedom::Tense.wraps());
+    }
+
+    #[test]
+    fn test_three_ouroboros_at_three_crossings() {
+        // 3 wrapping axes × 3 null crossings = trefoil knot
+        assert_eq!(Freedom::ouroboros_axes().len(), 3);
+        assert_eq!(Freedom::Null.cardinality(), 3);
     }
 
     #[test]
@@ -1105,15 +1241,67 @@ mod tests {
         assert!(!Freedom::Epistemic.is_spatial(), "epistemic is the 5th, not spatial");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // EPITOPE POLARITY — life ↔ non-life
+    // ═══════════════════════════════════════════════════════════
+
     #[test]
-    fn test_epistemic_wraps_like_ouroboros() {
-        // The epistemic axis wraps: ! → ? → O → !
-        // Just like scale wraps: π⁻³ → π³ → π⁻³
-        // Two ouroboros snakes, orthogonal.
-        assert!(Freedom::Scale.wraps());
-        assert!(Freedom::Epistemic.wraps());
-        assert_eq!(Freedom::Scale.cardinality(), 7);
-        assert_eq!(Freedom::Epistemic.cardinality(), 3);
+    fn test_life_epitopes() {
+        assert_eq!(Polarity::of_epitope("investigation"), Polarity::Life);
+        assert_eq!(Polarity::of_epitope("science"), Polarity::Life);
+        assert_eq!(Polarity::of_epitope("membrane"), Polarity::Life);
+    }
+
+    #[test]
+    fn test_nonlife_epitopes() {
+        assert_eq!(Polarity::of_epitope("topology"), Polarity::NonLife);
+        assert_eq!(Polarity::of_epitope("immune"), Polarity::NonLife);
+        assert_eq!(Polarity::of_epitope("other"), Polarity::NonLife);
+    }
+
+    #[test]
+    fn test_signal_is_midpoint() {
+        assert_eq!(Polarity::of_epitope("signal"), Polarity::Signal);
+    }
+
+    #[test]
+    fn test_polarity_roles() {
+        // Life produces info, non-life consumes as fuel, signal is the tool
+        assert_eq!(Polarity::Life.role(), Role::Info);
+        assert_eq!(Polarity::NonLife.role(), Role::Fuel);
+        assert_eq!(Polarity::Signal.role(), Role::Tool);
+    }
+
+    #[test]
+    fn test_polarity_symmetry() {
+        // 3 life + 1 signal + 3 non-life = 7 epitopes
+        // Symmetric around signal
+        assert_eq!(Polarity::of_epitope_index(0), 3);   // investigation: +3
+        assert_eq!(Polarity::of_epitope_index(3), 0);   // signal: 0
+        assert_eq!(Polarity::of_epitope_index(6), -3);  // other: -3
+        // Symmetric: |+3| == |-3|
+    }
+
+    #[test]
+    fn test_polarity_wraps_at_extremes() {
+        // investigation (+3) and other (-3) are the ends that wrap
+        // They wrap at tuebor — the black hole
+        let life_extreme = Polarity::of_epitope_index(0);
+        let nonlife_extreme = Polarity::of_epitope_index(6);
+        assert_eq!(life_extreme.abs(), nonlife_extreme.abs(),
+            "life and non-life extremes are equidistant from signal");
+    }
+
+    #[test]
+    fn test_live_fleet_is_nonlife() {
+        // From live data: human 9.5%, fleet 90.5%
+        // Fleet is non-life — negentropy eater
+        // The fleet sorts DOWN (fuel), humans sort UP (info)
+        // But they sort TOWARD each other on the wrapping axis
+        let fleet_role = Polarity::NonLife.role();
+        let human_role = Polarity::Life.role();
+        assert_eq!(fleet_role, Role::Fuel, "fleet eats negentropy");
+        assert_eq!(human_role, Role::Info, "humans build structure");
     }
 
     // ═══════════════════════════════════════════════════════════
