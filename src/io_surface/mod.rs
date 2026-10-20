@@ -19,6 +19,7 @@
 //! - `arktix` — arkTIX: permafrost preprint archive. Cold storage for info memes.
 //! - `proof_structure` — Theorem/Corollary/Conjecture/Proof. The mathematical stack.
 //! - `bounty_map` — π/i² reinvestment (Basel), funding sources, damage claims.
+//! - `evolution_pressure` — Sigmoid aperture, gradient mixer, RPM timekeeper.
 
 pub mod core;
 pub mod pores;
@@ -33,6 +34,7 @@ pub mod gaia_paper;
 pub mod arktix;
 pub mod proof_structure;
 pub mod bounty_map;
+pub mod evolution_pressure;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -50,3 +52,4 @@ pub use gaia_paper::*;
 pub use arktix::*;
 pub use proof_structure::*;
 pub use bounty_map::*;
+pub use evolution_pressure::*;
