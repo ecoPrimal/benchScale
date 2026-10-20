@@ -15,6 +15,7 @@
 //! - `cns` — Gear, CnsType, Surface, surfaces, topo_sorted, gear_shift_needed
 //! - `stone_book` — Glyph, Tally, Tablet, StoneBook. Totality ledger.
 //! - `pi_body` — Vitruvian overlay, sensory homunculus, shape ladder
+//! - `gaia_paper` — gAIa Paper 001: The Rust Polymerase. First publication.
 
 pub mod core;
 pub mod pores;
@@ -25,6 +26,7 @@ pub mod ring_sort;
 pub mod cns;
 pub mod stone_book;
 pub mod pi_body;
+pub mod gaia_paper;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -38,3 +40,4 @@ pub use ring_sort::*;
 pub use cns::*;
 pub use stone_book::*;
 pub use pi_body::*;
+pub use gaia_paper::*;
