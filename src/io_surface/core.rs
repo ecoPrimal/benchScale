@@ -1058,5 +1058,147 @@ mod tests {
         assert!(has_stone && has_water && has_sky && has_signal,
             "all 4 landmark kinds should be present");
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // PORTAL TESTS — every screen is an I/O surface
+    //
+    // Lab protocol: prove the same pore math works on fridge,
+    // phone, VR headset, kiosk. Repeatedly stable.
+    // Reality = the irrational remainder (what's left after
+    // compression IS identity).
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_fridge_is_a_portal() {
+        let surface = IoSurface::preset("fridge").unwrap();
+        // Fridge has display, touch, speaker, network, storage
+        assert!(surface.channel("display").map_or(false, |c| c.active));
+        assert!(surface.channel("touch").map_or(false, |c| c.active));
+        // No camera, no mic → no visual/audio mirror pairs
+        assert_eq!(surface.mirrors.len(), 0);
+        // But it HAS a visual pore (outward only — display without camera)
+        let pores = surface.pores();
+        let visual = pores.iter().find(|(n, _)| n == "visual");
+        assert!(visual.is_some(), "fridge has a visual pore (display)");
+        let vp = &visual.unwrap().1;
+        assert!(vp.outward > vp.inward, "visual pore is outward-dominant (display only)");
+    }
+
+    #[test]
+    fn test_ar_phone_camera_is_through() {
+        let surface = IoSurface::preset("ar").unwrap();
+        // AR phone: camera mirror angle = Through (not Toward)
+        let cam_mirror = surface.mirrors.iter().find(|m| m.input == "camera").unwrap();
+        assert_eq!(cam_mirror.default_angle, ReflectionAngle::Through);
+        // Through angle → identity chirality (no left↔right flip)
+        let views = surface.reflection_summary();
+        let cam_view = views.iter().find(|v| v.input == "camera").unwrap();
+        assert_eq!(cam_view.effective_chirality, MirrorChirality::Identity,
+            "AR Through should cancel chirality — you see reality, not a mirror");
+    }
+
+    #[test]
+    fn test_ar_phone_still_has_all_touch_channels() {
+        let surface = IoSurface::preset("portal").unwrap();
+        // The camera's touch points ARE the I/O channels
+        assert!(surface.channel("touch").map_or(false, |c| c.active));
+        assert!(surface.channel("gyro").map_or(false, |c| c.active));
+        assert!(surface.channel("gps").map_or(false, |c| c.active));
+        assert!(surface.channel("camera").map_or(false, |c| c.active));
+    }
+
+    #[test]
+    fn test_vr_headset_passthrough_stereo() {
+        let surface = IoSurface::preset("vr").unwrap();
+        // VR has stereo display and passthrough camera
+        let display = surface.channel("display").unwrap();
+        assert_eq!(display.properties.get("stereo").and_then(|v| v.as_bool()), Some(true));
+        let camera = surface.channel("camera").unwrap();
+        assert_eq!(camera.properties.get("mode").and_then(|v| v.as_str()), Some("passthrough_stereo"));
+        // Camera mirror is Through (passthrough, not selfie)
+        let cam_mirror = surface.mirrors.iter().find(|m| m.input == "camera").unwrap();
+        assert_eq!(cam_mirror.default_angle, ReflectionAngle::Through);
+    }
+
+    #[test]
+    fn test_vr_headset_has_6dof() {
+        let surface = IoSurface::preset("quest").unwrap();
+        let gyro = surface.channel("gyro").unwrap();
+        assert_eq!(gyro.properties.get("dof").and_then(|v| v.as_u64()), Some(6));
+    }
+
+    #[test]
+    fn test_kiosk_no_camera_no_battery() {
+        let surface = IoSurface::preset("kiosk").unwrap();
+        // Kiosk: public terminal, no camera (privacy), no battery (mains power)
+        assert!(surface.channel("camera").is_none());
+        assert!(surface.channel("battery").is_none());
+        // But has touch and large display
+        assert!(surface.channel("touch").map_or(false, |c| c.active));
+        assert!(surface.channel("display").map_or(false, |c| c.active));
+    }
+
+    #[test]
+    fn test_all_portals_collapse_to_pores() {
+        // Lab protocol: every device collapses to pores. This is the
+        // invariant. Fridge, phone, VR, kiosk, server — all the same math.
+        for name in IoSurface::preset_names() {
+            let surface = IoSurface::preset(name).unwrap();
+            let pores = surface.pores();
+            assert!(!pores.is_empty(),
+                "preset '{}' should have at least one pore", name);
+            // Every open pore should have non-negative permeability
+            for (pore_name, pore) in &pores {
+                assert!(pore.inward >= 0.0 && pore.outward >= 0.0,
+                    "pore '{}/{}' has negative permeability", name, pore_name);
+            }
+        }
+    }
+
+    #[test]
+    fn test_selfie_to_ar_is_one_rotation() {
+        // This is the key insight: AR isn't special hardware.
+        // It's rotating the camera mirror from Toward to Through.
+        let selfie = IoSurface::preset("iphone").unwrap();
+        let ar = IoSurface::preset("ar").unwrap();
+
+        // Same channel set
+        assert_eq!(selfie.channels.len(), ar.channels.len());
+
+        // But the camera mirror angle differs
+        let selfie_cam = selfie.mirrors.iter().find(|m| m.input == "camera").unwrap();
+        let ar_cam = ar.mirrors.iter().find(|m| m.input == "camera").unwrap();
+        assert_eq!(selfie_cam.default_angle, ReflectionAngle::Toward);
+        assert_eq!(ar_cam.default_angle, ReflectionAngle::Through);
+
+        // The chirality follows: selfie flips, AR doesn't
+        let selfie_views = selfie.reflection_summary();
+        let ar_views = ar.reflection_summary();
+        let sc = selfie_views.iter().find(|v| v.input == "camera").unwrap();
+        let ac = ar_views.iter().find(|v| v.input == "camera").unwrap();
+        assert_eq!(sc.effective_chirality, MirrorChirality::LeftRight);
+        assert_eq!(ac.effective_chirality, MirrorChirality::Identity);
+    }
+
+    #[test]
+    fn test_nine_presets_discoverable() {
+        // 5 original + 4 portal presets
+        assert_eq!(IoSurface::preset_names().len(), 9);
+    }
+
+    #[test]
+    fn test_portal_preset_aliases() {
+        // Every alias resolves
+        let aliases = [
+            "iphone", "mobile", "workstation", "desktop", "laptop",
+            "surface", "ci", "server", "low-power", "2g",
+            "fridge", "iot", "ar", "portal", "vr", "quest",
+            "kiosk", "pos", "signage",
+        ];
+        for alias in aliases {
+            assert!(IoSurface::preset(alias).is_some(),
+                "alias '{}' should resolve to a preset", alias);
+        }
+    }
 }
 

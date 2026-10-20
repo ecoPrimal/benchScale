@@ -976,6 +976,103 @@ impl IoSurface {
         surface
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // PORTAL PRESETS — every screen is a portal
+    //
+    // A smart fridge browser, an iPhone looking at the sky for AR,
+    // a VR headset, a kiosk — they're all I/O surfaces with pores.
+    // AR isn't special hardware. It's rotating the camera mirror
+    // from Toward (selfie) to Through (looking through the glass).
+    //
+    // The camera already has touch points. If we I/O that too,
+    // we have recon — not Meta Ray-Ban bullshit.
+    // ═══════════════════════════════════════════════════════════════
+
+    /// Smart fridge / embedded display — touch, display, network, no camera/mic/gyro
+    pub fn preset_embedded_display() -> Self {
+        Self::from_channels(vec![
+            IoChannel { name: "display".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Visual, active: true, mirror: None, bandwidth: 2_000_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("width".into(), 800.into()); m.insert("height".into(), 480.into()); m.insert("dpr".into(), 1.into()); m
+            }},
+            IoChannel { name: "touch".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Tactile, active: true, mirror: None, bandwidth: 120.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("max_points".into(), 2.into()); m
+            }},
+            IoChannel { name: "speaker".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Audio, active: true, mirror: None, bandwidth: 48_000.0, properties: serde_json::Map::new() },
+            IoChannel { name: "network".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Data, active: true, mirror: None, bandwidth: 100_000_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("type".into(), "wifi".into()); m
+            }},
+            IoChannel { name: "storage".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Persistence, active: true, mirror: None, bandwidth: 50_000_000.0, properties: serde_json::Map::new() },
+        ])
+    }
+
+    /// AR phone — camera looking THROUGH (not toward), gyro, GPS, full touch
+    /// The key rotation: `ReflectionAngle::Through` means the camera mirror
+    /// becomes transparent — you see the world with data overlaid.
+    pub fn preset_ar_phone() -> Self {
+        let mut surface = Self::preset_touch_small_spatial();
+        // Rotate camera mirror from Toward (selfie) to Through (AR portal)
+        surface.rotate_mirror("camera", ReflectionAngle::Through);
+        // AR needs high camera bandwidth (real-time video pass-through)
+        if let Some(cam) = surface.channels.iter_mut().find(|ch| ch.name == "camera") {
+            cam.bandwidth = 60_000_000.0; // 60fps passthrough
+            cam.properties.insert("mode".into(), "ar_passthrough".into());
+        }
+        surface.profile = Self::classify(&surface.channels);
+        surface
+    }
+
+    /// VR headset — stereoscopic display, spatial audio, gyro/accelerometer,
+    /// no traditional touch (hand tracking via camera instead)
+    pub fn preset_vr_headset() -> Self {
+        let mut surface = Self::from_channels(vec![
+            IoChannel { name: "display".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Visual, active: true, mirror: None, bandwidth: 120_000_000.0, properties: {
+                let mut m = serde_json::Map::new();
+                m.insert("width".into(), 2160.into()); m.insert("height".into(), 2160.into());
+                m.insert("dpr".into(), 1.into()); m.insert("stereo".into(), true.into());
+                m.insert("refresh_hz".into(), 90.into()); m
+            }},
+            IoChannel { name: "camera".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Visual, active: true, mirror: None, bandwidth: 120_000_000.0, properties: {
+                let mut m = serde_json::Map::new();
+                m.insert("mode".into(), "passthrough_stereo".into());
+                m.insert("hand_tracking".into(), true.into()); m
+            }},
+            IoChannel { name: "speaker".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Audio, active: true, mirror: None, bandwidth: 96_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("spatial".into(), true.into()); m
+            }},
+            IoChannel { name: "mic".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Audio, active: true, mirror: None, bandwidth: 48_000.0, properties: serde_json::Map::new() },
+            IoChannel { name: "gyro".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Spatial, active: true, mirror: None, bandwidth: 1000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("dof".into(), 6.into()); m
+            }},
+            IoChannel { name: "network".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Data, active: true, mirror: None, bandwidth: 1_000_000_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("type".into(), "wifi6e".into()); m
+            }},
+            IoChannel { name: "storage".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Persistence, active: true, mirror: None, bandwidth: 500_000_000.0, properties: serde_json::Map::new() },
+            IoChannel { name: "battery".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Energy, active: true, mirror: None, bandwidth: 1.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("capacity_wh".into(), 18.into()); m
+            }},
+        ]);
+        // VR: camera mirror is Through (passthrough), not Toward (selfie)
+        surface.rotate_mirror("camera", ReflectionAngle::Through);
+        surface
+    }
+
+    /// Kiosk / public display — large touch, no camera/mic/gyro, no battery
+    pub fn preset_kiosk() -> Self {
+        Self::from_channels(vec![
+            IoChannel { name: "display".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Visual, active: true, mirror: None, bandwidth: 8_000_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("width".into(), 1920.into()); m.insert("height".into(), 1080.into()); m.insert("dpr".into(), 1.into()); m
+            }},
+            IoChannel { name: "touch".into(), direction: ChannelDirection::Input, medium: ChannelMedium::Tactile, active: true, mirror: None, bandwidth: 60.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("max_points".into(), 10.into()); m
+            }},
+            IoChannel { name: "speaker".into(), direction: ChannelDirection::Output, medium: ChannelMedium::Audio, active: true, mirror: None, bandwidth: 48_000.0, properties: serde_json::Map::new() },
+            IoChannel { name: "network".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Data, active: true, mirror: None, bandwidth: 1_000_000_000.0, properties: {
+                let mut m = serde_json::Map::new(); m.insert("type".into(), "ethernet".into()); m
+            }},
+            IoChannel { name: "storage".into(), direction: ChannelDirection::Bidirectional, medium: ChannelMedium::Persistence, active: true, mirror: None, bandwidth: 500_000_000.0, properties: serde_json::Map::new() },
+        ])
+    }
+
     /// Get a preset by name
     pub fn preset(name: &str) -> Option<Self> {
         match name {
@@ -984,6 +1081,10 @@ impl IoSurface {
             "hybrid-medium" | "laptop" | "surface" => Some(Self::preset_hybrid_medium()),
             "headless" | "ci" | "server" => Some(Self::preset_headless()),
             "conserve" | "low-power" | "2g" => Some(Self::preset_conserve()),
+            "embedded-display" | "fridge" | "iot" => Some(Self::preset_embedded_display()),
+            "ar-phone" | "ar" | "portal" => Some(Self::preset_ar_phone()),
+            "vr-headset" | "vr" | "quest" => Some(Self::preset_vr_headset()),
+            "kiosk" | "pos" | "signage" => Some(Self::preset_kiosk()),
             _ => None,
         }
     }
@@ -996,6 +1097,10 @@ impl IoSurface {
             "hybrid-medium",
             "headless",
             "conserve",
+            "embedded-display",
+            "ar-phone",
+            "vr-headset",
+            "kiosk",
         ]
     }
 }

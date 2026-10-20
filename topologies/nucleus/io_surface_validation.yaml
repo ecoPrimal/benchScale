@@ -1,0 +1,261 @@
+# I/O Surface Validation Topology
+#
+# Tests the same NUCLEUS across three different I/O surfaces.
+# "Mobile" and "desktop" are not categories — they are different
+# combinations of open channels with different bandwidths.
+#
+# A microphone is a speaker from the other side.
+# A camera is a display from the other side.
+# A vibration motor is touch from the other side.
+#
+# The membrane probes what's there and adapts.
+
+metadata:
+  name: io-surface-validation
+  description: >-
+    Validates NUCLEUS behavior across I/O surfaces. Three endpoints
+    with identical primal stacks but different channel configurations.
+    Tests that the HUD, membrane bus, and content serving adapt to
+    the surface — not to a device category.
+  version: "1.0"
+  tags: ["nucleus", "io-surface", "validation", "mirror", "adaptive"]
+
+network:
+  name: io-surface-validation-net
+  subnet: "10.80.0.0/24"
+
+nodes:
+  # ── Touch-only surface (iPhone-class) ───────────────────────────
+  # 13 channels, touch active, no pointer, small viewport, spatial
+  - name: surface-touch
+    image: ubuntu:24.04
+    env:
+      ROLE: nucleus-full
+      NODE_ID: "1"
+      FAMILY_ID: "benchscale-io-surface"
+      IO_SURFACE_PRESET: "touch-small-spatial"
+      # Channels as env vars (matches io-probe.js output format)
+      IO_PROFILE: "touch-only,small,spatial"
+      IO_DISPLAY_ACTIVE: "true"
+      IO_DISPLAY_WIDTH: "390"
+      IO_DISPLAY_HEIGHT: "844"
+      IO_DISPLAY_DPR: "3"
+      IO_TOUCH_ACTIVE: "true"
+      IO_TOUCH_POINTS: "5"
+      IO_MOUSE_ACTIVE: "false"
+      IO_KEYBOARD_ACTIVE: "true"
+      IO_KEYBOARD_VIRTUAL: "true"
+      IO_SPEAKER_ACTIVE: "true"
+      IO_MIC_ACTIVE: "true"
+      IO_CAMERA_ACTIVE: "true"
+      IO_GYRO_ACTIVE: "true"
+      IO_VIBRATE_ACTIVE: "true"
+      IO_BATTERY_ACTIVE: "true"
+      IO_BATTERY_LEVEL: "0.85"
+      IO_GPS_ACTIVE: "true"
+      # Mirror pairs: mic↔speaker, camera↔display, touch↔vibrate
+      IO_MIRROR_MIC_SPEAKER: "audio"
+      IO_MIRROR_CAMERA_DISPLAY: "visual"
+      IO_MIRROR_TOUCH_VIBRATE: "tactile"
+    network_conditions:
+      preset: mobile_cell
+      latency_ms: 100
+      packet_loss_percent: 2
+      bandwidth_kbps: 30000
+      jitter_ms: 30
+
+  # ── Pointer-only surface (workstation-class) ────────────────────
+  # 13 channels, pointer active, no touch, large viewport, no spatial
+  - name: surface-pointer
+    image: ubuntu:24.04
+    env:
+      ROLE: nucleus-full
+      NODE_ID: "2"
+      FAMILY_ID: "benchscale-io-surface"
+      IO_SURFACE_PRESET: "pointer-large"
+      IO_PROFILE: "pointer-only,large"
+      IO_DISPLAY_ACTIVE: "true"
+      IO_DISPLAY_WIDTH: "2560"
+      IO_DISPLAY_HEIGHT: "1440"
+      IO_DISPLAY_DPR: "1"
+      IO_TOUCH_ACTIVE: "false"
+      IO_MOUSE_ACTIVE: "true"
+      IO_MOUSE_HOVER: "true"
+      IO_MOUSE_FINE: "true"
+      IO_KEYBOARD_ACTIVE: "true"
+      IO_KEYBOARD_VIRTUAL: "false"
+      IO_SPEAKER_ACTIVE: "true"
+      IO_MIC_ACTIVE: "true"
+      IO_CAMERA_ACTIVE: "true"
+      IO_GYRO_ACTIVE: "false"
+      IO_VIBRATE_ACTIVE: "false"
+      IO_BATTERY_ACTIVE: "false"
+      IO_GPS_ACTIVE: "false"
+      IO_MIRROR_MIC_SPEAKER: "audio"
+      IO_MIRROR_CAMERA_DISPLAY: "visual"
+    network_conditions:
+      preset: basement_lan
+      latency_ms: 1
+      packet_loss_percent: 0
+      bandwidth_kbps: 1000000
+
+  # ── Hybrid surface (laptop with touchscreen) ───────────────────
+  # 13 channels, both touch + pointer, medium viewport, spatial
+  - name: surface-hybrid
+    image: ubuntu:24.04
+    env:
+      ROLE: nucleus-full
+      NODE_ID: "3"
+      FAMILY_ID: "benchscale-io-surface"
+      IO_SURFACE_PRESET: "hybrid-medium"
+      IO_PROFILE: "hybrid,large,spatial"
+      IO_DISPLAY_ACTIVE: "true"
+      IO_DISPLAY_WIDTH: "1366"
+      IO_DISPLAY_HEIGHT: "1024"
+      IO_DISPLAY_DPR: "2"
+      IO_TOUCH_ACTIVE: "true"
+      IO_TOUCH_POINTS: "10"
+      IO_MOUSE_ACTIVE: "true"
+      IO_MOUSE_HOVER: "true"
+      IO_KEYBOARD_ACTIVE: "true"
+      IO_KEYBOARD_VIRTUAL: "false"
+      IO_SPEAKER_ACTIVE: "true"
+      IO_MIC_ACTIVE: "true"
+      IO_CAMERA_ACTIVE: "true"
+      IO_GYRO_ACTIVE: "true"
+      IO_VIBRATE_ACTIVE: "false"
+      IO_BATTERY_ACTIVE: "true"
+      IO_BATTERY_LEVEL: "0.72"
+      IO_GPS_ACTIVE: "true"
+      IO_MIRROR_MIC_SPEAKER: "audio"
+      IO_MIRROR_CAMERA_DISPLAY: "visual"
+    network_conditions:
+      preset: campus
+      latency_ms: 5
+      packet_loss_percent: 0.1
+      bandwidth_kbps: 100000
+
+  # ── Headless / CI surface ──────────────────────────────────────
+  # Only 2 channels active: network + storage. No display, no input.
+  - name: surface-headless
+    image: ubuntu:24.04
+    env:
+      ROLE: nucleus-full
+      NODE_ID: "4"
+      FAMILY_ID: "benchscale-io-surface"
+      IO_SURFACE_PRESET: "headless"
+      IO_PROFILE: ""
+      IO_DISPLAY_ACTIVE: "false"
+      IO_TOUCH_ACTIVE: "false"
+      IO_MOUSE_ACTIVE: "false"
+      IO_KEYBOARD_ACTIVE: "false"
+      IO_SPEAKER_ACTIVE: "false"
+      IO_MIC_ACTIVE: "false"
+      IO_CAMERA_ACTIVE: "false"
+      IO_GYRO_ACTIVE: "false"
+      IO_VIBRATE_ACTIVE: "false"
+      IO_BATTERY_ACTIVE: "false"
+      IO_GPS_ACTIVE: "false"
+    network_conditions:
+      preset: basement_lan
+      latency_ms: 1
+      packet_loss_percent: 0
+      bandwidth_kbps: 10000000
+
+  # ── Conserve surface (low battery, 2G, save-data) ─────────────
+  # Touch-small-spatial but energy-starved and bandwidth-starved
+  - name: surface-conserve
+    image: ubuntu:24.04
+    env:
+      ROLE: nucleus-full
+      NODE_ID: "5"
+      FAMILY_ID: "benchscale-io-surface"
+      IO_SURFACE_PRESET: "conserve"
+      IO_PROFILE: "touch-only,small,spatial,conserve"
+      IO_DISPLAY_ACTIVE: "true"
+      IO_DISPLAY_WIDTH: "390"
+      IO_DISPLAY_HEIGHT: "844"
+      IO_DISPLAY_DPR: "3"
+      IO_TOUCH_ACTIVE: "true"
+      IO_MOUSE_ACTIVE: "false"
+      IO_GYRO_ACTIVE: "true"
+      IO_BATTERY_ACTIVE: "true"
+      IO_BATTERY_LEVEL: "0.08"
+      IO_BATTERY_CHARGING: "false"
+      IO_NETWORK_SAVE_DATA: "true"
+      IO_NETWORK_EFFECTIVE_TYPE: "2g"
+      IO_NETWORK_DOWNLINK_MBPS: "0.3"
+    network_conditions:
+      latency_ms: 600
+      packet_loss_percent: 5
+      bandwidth_kbps: 300
+
+# ── Validation ───────────────────────────────────────────────────
+# The NUCLEUS should behave correctly across all surfaces.
+# Same content, same trust, different adaptation.
+validation:
+  signal: io_surface_adaptation
+  sequence:
+    # 1. All surfaces can reach each other (same family, same trust)
+    - target: surface-pointer
+      method: health.check
+      from: surface-touch
+      expect: "alive"
+      description: "touch surface reaches pointer surface — same family"
+
+    - target: surface-touch
+      method: health.check
+      from: surface-headless
+      expect: "alive"
+      description: "headless surface reaches touch surface — same family"
+
+    # 2. HUD adapts to surface profile (io-probe detects channels)
+    - target: surface-touch
+      method: hud.profile
+      expect:
+        profile_contains: ["touch-only", "small", "spatial"]
+        min_tap_px: 44
+      description: "HUD detects touch-only small spatial surface"
+
+    - target: surface-pointer
+      method: hud.profile
+      expect:
+        profile_contains: ["pointer-only", "large"]
+        min_tap_px: 24
+      description: "HUD detects pointer-only large surface"
+
+    - target: surface-headless
+      method: hud.profile
+      expect:
+        open_channels: 2
+        profile_contains: []
+      description: "HUD detects headless surface — no display, no input"
+
+    # 3. Conserve surface reduces bandwidth usage
+    - target: surface-conserve
+      method: hud.profile
+      expect:
+        profile_contains: ["conserve"]
+        animations_disabled: true
+      description: "conserve surface disables animations and reduces payload"
+
+    # 4. Mirror pairs detected on surfaces that have both sides
+    - target: surface-touch
+      method: io.mirrors
+      expect:
+        mirror_count: 3
+        pairs: ["mic↔speaker", "camera↔display", "touch↔vibrate"]
+      description: "touch surface has 3 mirror pairs (all sensors active)"
+
+    - target: surface-pointer
+      method: io.mirrors
+      expect:
+        mirror_count: 2
+        pairs: ["mic↔speaker", "camera↔display"]
+      description: "pointer surface has 2 mirror pairs (no touch/vibrate)"
+
+    - target: surface-headless
+      method: io.mirrors
+      expect:
+        mirror_count: 0
+      description: "headless surface has no mirror pairs"
