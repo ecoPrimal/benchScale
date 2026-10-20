@@ -14,6 +14,7 @@
 //! - `ring_sort` — RingTier, Ring, ring_layout, grinding_pairs, topo_sort_rings
 //! - `cns` — Gear, CnsType, Surface, surfaces, topo_sorted, gear_shift_needed
 //! - `stone_book` — Glyph, Tally, Tablet, StoneBook. Totality ledger.
+//! - `pi_body` — Vitruvian overlay, sensory homunculus, shape ladder
 
 pub mod core;
 pub mod pores;
@@ -23,6 +24,7 @@ pub mod stadial;
 pub mod ring_sort;
 pub mod cns;
 pub mod stone_book;
+pub mod pi_body;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -35,3 +37,4 @@ pub use stadial::*;
 pub use ring_sort::*;
 pub use cns::*;
 pub use stone_book::*;
+pub use pi_body::*;

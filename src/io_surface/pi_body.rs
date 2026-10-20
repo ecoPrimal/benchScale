@@ -1,0 +1,853 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//! π Body — the Vitruvian overlay.
+//!
+//! Da Vinci's Vitruvian Man stands inscribed in both circle and square.
+//! Circle = the ouroboros (π wraps). Square = the bingo grid (cells).
+//! The body IS the π graph. The π graph IS the body.
+//!
+//! # The sensory homunculus
+//!
+//! The cortical homunculus distorts the body by SENSITIVITY, not size.
+//! Hands and lips are huge (dense nerve endings). Back is tiny.
+//! Our homunculus distorts organisms by their importance to the system,
+//! not their line count.
+//!
+//! # Three perceives
+//!
+//! The human sees from inside the body (first person, subjective).
+//! The membrane sees from outside (third person, objective).
+//! Neither knows what the other sees.
+//!
+//! ```text
+//!   Human view  (mine)  — I'm inside looking out. Sensory homunculus.
+//!   Membrane view (yours) — I'm outside looking in. stoneBook scanner.
+//!   Mixed view (ours)    — Both perspectives overlaid. Vitruvian.
+//! ```
+//!
+//! The epistemic axis maps: mine = !, yours = ?, mixed = O.
+//! What I know, what you might know, and the null where we meet.
+//!
+//! # Body → π mapping
+//!
+//! ```text
+//!   HEAD       = Prefrontal (clutch, tuebor)     — executive, decides
+//!   EYES       = Sensory (hud, signal, gorilla)   — observes, real-time
+//!   HANDS      = Motor (detroit, barry, lansing)   — acts, builds
+//!   SPINE      = Autonomic (membrane, neutron, ca) — breathes, routes
+//!   HEART      = Vital (always flows)              — keeps alive
+//!   SKIN       = Immune (defense perimeter)        — protects
+//!   FEET       = Cortex (sporeprint, thesis)       — grounds, science
+//! ```
+//!
+//! # Shape ladder
+//!
+//! Simple shapes everyone can see → complex topology:
+//!
+//! ```text
+//!   Circle    (2D, wraps)       → one ouroboros
+//!   Square    (2D, grid)        → one bingo face (7×7)
+//!   Sphere    (3D, wraps all)   → 3 ouroboros interlocked
+//!   Cube      (3D, grid)        → bingo cube (7×7×3)
+//!   Tetrahedron (4 faces)       → 4 spatial freedoms
+//!   Tesseract (4D)              → + tense axis
+//!   Hypersphere (5D, wraps)     → + epistemic axis = full stoneBook
+//! ```
+//!
+//! The banana is the ouroboros curve. The apple is the torus
+//! (sphere with a stem-hole = knot threading through it).
+//!
+//! Authorship: Kevin Mok / Tamison / ecoPrimal / attsi
+//! ORCID: 0009-0004-2141-0321
+
+use serde::{Deserialize, Serialize};
+
+use super::cns::CnsType;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BODY REGION — the Vitruvian mapping
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Body region on the Vitruvian overlay.
+/// Maps CNS types to body parts. The body IS the π graph.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum BodyRegion {
+    /// Head — executive function. Decides what to do.
+    /// Prefrontal cortex. clutch, tuebor.
+    Head,
+    /// Eyes — sensory observation. Sees what's happening.
+    /// Visual cortex. hud, signal, gorilla, water, live.
+    Eyes,
+    /// Hands — motor action. Builds and manipulates.
+    /// Motor cortex. detroit, barry, lansing.
+    Hands,
+    /// Spine — autonomic routing. Breathes without thinking.
+    /// Spinal cord. membrane, neutron, ca, nestgate, depot, mesh.
+    Spine,
+    /// Heart — vital flow. Always pumping, never stops.
+    /// Cardiovascular. The bus tier that always fires.
+    Heart,
+    /// Skin — immune defense. The membrane itself.
+    /// Protects the boundary. Honeycomb maze.
+    Skin,
+    /// Feet — cortical grounding. Science, evidence, foundation.
+    /// Cerebellum. sporeprint, thesis, hypothesis.
+    Feet,
+}
+
+impl BodyRegion {
+    /// Map a CNS type to its body region.
+    #[must_use]
+    pub const fn from_cns(cns: &CnsType) -> Self {
+        match cns {
+            CnsType::Prefrontal => Self::Head,
+            CnsType::Sensory => Self::Eyes,
+            CnsType::Motor => Self::Hands,
+            CnsType::Autonomic => Self::Spine,
+            CnsType::Immune => Self::Skin,
+            CnsType::Cortex => Self::Feet,
+        }
+    }
+
+    /// The label for this body region.
+    #[must_use]
+    pub const fn label(&self) -> &'static str {
+        match self {
+            Self::Head => "head",
+            Self::Eyes => "eyes",
+            Self::Hands => "hands",
+            Self::Spine => "spine",
+            Self::Heart => "heart",
+            Self::Skin => "skin",
+            Self::Feet => "feet",
+        }
+    }
+
+    /// All 7 body regions (like 7 π scales, 7 epitopes).
+    #[must_use]
+    pub const fn all() -> &'static [BodyRegion] {
+        &[
+            BodyRegion::Head,
+            BodyRegion::Eyes,
+            BodyRegion::Hands,
+            BodyRegion::Spine,
+            BodyRegion::Heart,
+            BodyRegion::Skin,
+            BodyRegion::Feet,
+        ]
+    }
+}
+
+impl std::fmt::Display for BodyRegion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.label())
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SENSORY HOMUNCULUS — distortion by sensitivity, not size
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Homunculus weight — how "big" a body part appears on the
+/// sensory homunculus. Bigger = more nerve endings = more sensitive
+/// to the system = more important than raw line count suggests.
+///
+/// The distortion reveals what MATTERS, not what's LARGE.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HomunculusWeight {
+    /// Body region.
+    pub region: BodyRegion,
+    /// Raw size (lines of code, entity count, etc.)
+    pub raw_size: u64,
+    /// Sensitivity weight (tests per line, coverage, responsiveness).
+    /// Higher = more nerve endings = appears bigger on homunculus.
+    pub sensitivity: f64,
+    /// Homunculus size = raw_size × sensitivity. What you actually SEE.
+    pub apparent_size: f64,
+}
+
+/// Compute homunculus weights from surface counts.
+///
+/// Sensitivity is measured by test density: tests / items.
+/// High test density = high sensitivity = the organism FEELS more.
+/// Low test density = numb = the organism can't feel changes there.
+#[must_use]
+pub fn homunculus_weights(
+    region_data: &[(BodyRegion, u64, u64)], // (region, items, tests)
+) -> Vec<HomunculusWeight> {
+    region_data.iter().map(|(region, items, tests)| {
+        let sensitivity = if *items == 0 {
+            0.0
+        } else {
+            *tests as f64 / *items as f64
+        };
+        HomunculusWeight {
+            region: *region,
+            raw_size: *items,
+            sensitivity,
+            apparent_size: *items as f64 * sensitivity,
+        }
+    }).collect()
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// THREE PERCEIVES — mine, yours, mixed
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Perceive — whose view are we looking through?
+///
+/// The human sees from inside (first person, subjective).
+/// The membrane sees from outside (third person, objective).
+/// Neither knows what the other truly sees.
+///
+/// Maps onto the epistemic axis:
+///   Mine  = `!` (asserted — I know what I see)
+///   Yours = `?` (unknown — I don't know what you see)
+///   Mixed = `O` (null — where we meet, the origin)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Perceive {
+    /// Human view — inside looking out. Sensory homunculus.
+    /// "I feel my hands are huge because I use them constantly."
+    Mine,
+    /// Membrane view — outside looking in. stoneBook scanner.
+    /// "I see your organisms sized by line count and pub items."
+    Yours,
+    /// Mixed view — both overlaid. Vitruvian Man.
+    /// "Where your inside and my outside agree, there's the body."
+    Mixed,
+}
+
+impl Perceive {
+    /// The epistemic glyph for this perceive.
+    #[must_use]
+    pub const fn glyph(&self) -> super::stone_book::Glyph {
+        match self {
+            Self::Mine => super::stone_book::Glyph::Asserted,  // !
+            Self::Yours => super::stone_book::Glyph::Unknown,  // ?
+            Self::Mixed => super::stone_book::Glyph::Null,     // O
+        }
+    }
+
+    /// All three perceives.
+    #[must_use]
+    pub const fn all() -> &'static [Perceive] {
+        &[Perceive::Mine, Perceive::Yours, Perceive::Mixed]
+    }
+}
+
+impl std::fmt::Display for Perceive {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Mine => write!(f, "mine (!)"),
+            Self::Yours => write!(f, "yours (?)"),
+            Self::Mixed => write!(f, "mixed (O)"),
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHAPE LADDER — simple shapes → complex topology
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Shape — the ladder from simple geometry to the full stoneBook.
+///
+/// Each shape adds a dimension. Everyone can see a circle.
+/// By the time you reach the hypersphere, you're navigating
+/// the full 5D stoneBook space — but you started with shapes
+/// you already knew.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Shape {
+    /// Circle — 1 loop, wraps. One ouroboros.
+    Circle,
+    /// Square — 2D grid, flat. One bingo face (7×7).
+    Square,
+    /// Sphere — 3D, all surfaces wrap. 3 ouroboros interlocked.
+    Sphere,
+    /// Cube — 3D grid. The bingo cube (7×7×3 = 147 cells).
+    Cube,
+    /// Tetrahedron — simplest 3D solid, 4 faces = 4 spatial freedoms.
+    Tetrahedron,
+    /// Tesseract — 4D hypercube. + tense axis (441 cells).
+    Tesseract,
+    /// Hypersphere — 5D, all axes. Full stoneBook (1323 positions).
+    Hypersphere,
+}
+
+impl Shape {
+    /// How many dimensions does this shape live in?
+    #[must_use]
+    pub const fn dimensions(&self) -> u8 {
+        match self {
+            Self::Circle | Self::Square => 2,
+            Self::Sphere | Self::Cube | Self::Tetrahedron => 3,
+            Self::Tesseract => 4,
+            Self::Hypersphere => 5,
+        }
+    }
+
+    /// How many cells/positions in this shape?
+    #[must_use]
+    pub const fn positions(&self) -> usize {
+        match self {
+            Self::Circle => 7,            // 7 points on the ouroboros
+            Self::Square => 49,           // 7×7 grid
+            Self::Sphere => 21,           // 7 × 3 (scale × null, wrapped)
+            Self::Cube => 147,            // 7×7×3 (bingo cube)
+            Self::Tetrahedron => 63,      // 7×3×3 (scale × null × tense)
+            Self::Tesseract => 441,       // 7×7×3×3
+            Self::Hypersphere => 1323,    // 7×7×3×3×3
+        }
+    }
+
+    /// Does this shape wrap (close on itself)?
+    #[must_use]
+    pub const fn wraps(&self) -> bool {
+        match self {
+            Self::Circle | Self::Sphere | Self::Hypersphere => true,
+            Self::Square | Self::Cube | Self::Tetrahedron | Self::Tesseract => false,
+        }
+    }
+
+    /// The shape ladder, from simplest to most complex.
+    #[must_use]
+    pub const fn ladder() -> &'static [Shape] {
+        &[
+            Shape::Circle,
+            Shape::Square,
+            Shape::Sphere,
+            Shape::Cube,
+            Shape::Tetrahedron,
+            Shape::Tesseract,
+            Shape::Hypersphere,
+        ]
+    }
+
+    /// What familiar object does this shape look like?
+    #[must_use]
+    pub const fn looks_like(&self) -> &'static str {
+        match self {
+            Self::Circle => "ring, ouroboros, clock face, orbit",
+            Self::Square => "chessboard, spreadsheet, bingo card",
+            Self::Sphere => "ball, globe, apple (without the stem)",
+            Self::Cube => "dice, Rubik's cube, building block",
+            Self::Tetrahedron => "pyramid, tent, molecular bond",
+            Self::Tesseract => "shadow of a 4D box, time-lapse cube",
+            Self::Hypersphere => "the whole stoneBook — body of pi",
+        }
+    }
+}
+
+impl std::fmt::Display for Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} ({}D, {} positions)", self, self.dimensions(), self.positions())
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// π BODY — the Vitruvian inversion
+//
+// The body inscribed in circle (ouroboros) AND square (bingo grid).
+//
+//           Head (prefrontal)
+//            |
+//    Eyes ---|--- Eyes (sensory)
+//            |
+//   Hands ---|--- Hands (motor)
+//            |
+//         Spine (autonomic)
+//          /|\
+//    Heart | | Skin (immune)
+//          \|/
+//     Feet --- Feet (cortex)
+//
+// The circle wraps around the body (the 3 ouroboros).
+// The square tiles the body (the bingo grid).
+// Where they agree = the Vitruvian proportion.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// The Vitruvian proportion: where circle and square agree.
+/// When the homunculus sensitivity matches the scanner's raw measurement,
+/// the body part is in Vitruvian proportion — correctly weighted.
+///
+/// Ratio > 1.0 = homunculus says it's bigger than scanner sees (under-built)
+/// Ratio < 1.0 = scanner says it's bigger than homunculus feels (over-built)
+/// Ratio ≈ 1.0 = Vitruvian balance (circle and square agree)
+#[must_use]
+pub fn vitruvian_ratio(apparent_size: f64, raw_size: u64) -> f64 {
+    if raw_size == 0 { return 0.0; }
+    apparent_size / raw_size as f64
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORGANIC SHAPES — the banana and the apple
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Organic shape — natural forms that map onto π topology.
+///
+/// The banana is a curved segment — one arc of the ouroboros.
+/// The apple is a sphere with a stem-hole — a torus
+/// (knot threading through a sphere). The stem IS the crossing.
+///
+/// These aren't metaphors. They're the actual topology:
+/// - Banana: geodesic arc on a circle (partial ouroboros)
+/// - Apple: torus (sphere + through-hole = trefoil crossing)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum OrganicShape {
+    /// Banana — arc of the ouroboros. Curved, one-dimensional path.
+    /// Like following one organism's lifecycle from birth to death
+    /// without reaching the wrap point.
+    Banana,
+    /// Apple — sphere with a stem-hole. Torus topology.
+    /// The stem is where the trefoil knot threads through.
+    /// Bite into it and you find the core (null, origin, O).
+    Apple,
+}
+
+impl OrganicShape {
+    /// What topology does this organic shape represent?
+    #[must_use]
+    pub const fn topology(&self) -> &'static str {
+        match self {
+            Self::Banana => "geodesic arc on circle (partial ouroboros)",
+            Self::Apple => "torus: sphere + through-hole (trefoil crossing)",
+        }
+    }
+
+    /// What π shape does this organic form approximate?
+    #[must_use]
+    pub const fn pi_shape(&self) -> Shape {
+        match self {
+            Self::Banana => Shape::Circle,
+            Self::Apple => Shape::Sphere,
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORGANISM → BODY REGION MAPPING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Map an organism name to its body region.
+///
+/// The mapping follows what each organism DOES in the ecosystem:
+///
+/// ```text
+/// HEAD  (prefrontal)  — bingoCube (the graph), cellMembrane (types)
+/// EYES  (sensory)     — squirrel (chipmunk/feeds), songBird (gossip/obs)
+/// HANDS (motor)       — bearDog (investigation), nestGate (infra action)
+/// SPINE (autonomic)   — biomeOS (the OS itself), petalTongue (routing)
+/// HEART (vital)       — swarmVine (gossip heartbeat), benchScale (core)
+/// SKIN  (immune)      — skunkBat (defense), rhizoCrypt (crypto perimeter)
+/// FEET  (cortex)      — toadStool (science), coralReef (deep data)
+/// ```
+///
+/// Remaining organisms slot by function:
+/// - sweetGrass, sourDough, loamSpine → SPINE (autonomic processing)
+#[must_use]
+pub fn organism_body_region(name: &str) -> BodyRegion {
+    match name {
+        // HEAD — executive, decides
+        "bingoCube" | "cellMembrane" => BodyRegion::Head,
+        // EYES — observes, real-time
+        "squirrel" | "songBird" => BodyRegion::Eyes,
+        // HANDS — acts, builds, investigates
+        "bearDog" | "nestGate" => BodyRegion::Hands,
+        // SPINE — breathes, routes, processes
+        "biomeOS" | "petalTongue" | "sweetGrass" | "sourDough" | "loamSpine"
+            => BodyRegion::Spine,
+        // HEART — vital flow, always pumping
+        "swarmVine" | "benchScale" => BodyRegion::Heart,
+        // SKIN — defense, perimeter
+        "skunkBat" | "rhizoCrypt" => BodyRegion::Skin,
+        // FEET — science, evidence, grounding
+        "toadStool" | "coralReef" | "barraCuda" => BodyRegion::Feet,
+        // Default: spine (autonomic — unknown things breathe)
+        _ => BodyRegion::Spine,
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// π BODY STRUCT — the full Vitruvian overlay
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// A single body part with its homunculus weighting across all three perceives.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BodyPart {
+    /// Which region.
+    pub region: BodyRegion,
+    /// Organisms that live in this body part.
+    pub organisms: Vec<String>,
+    /// Human view (mine): homunculus — distorted by sensitivity.
+    /// "How big does this feel to the human using the system?"
+    pub mine: HomunculusWeight,
+    /// Membrane view (yours): scanner — raw measurements.
+    /// "How big does the scanner say this is?"
+    pub yours: HomunculusWeight,
+    /// Mixed view (ours): Vitruvian — where mine and yours agree.
+    /// Ratio near 1.0 = balanced. Far from 1.0 = distorted.
+    pub vitruvian: f64,
+}
+
+/// The full π body — all 7 regions, 3 perceives, 7 shapes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PiBody {
+    /// The 7 body parts with their 3 perceives.
+    pub parts: Vec<BodyPart>,
+    /// Total organisms mapped.
+    pub organism_count: usize,
+    /// The current shape level the user is viewing at.
+    pub shape: Shape,
+}
+
+impl PiBody {
+    /// Build a PiBody from organism scan data.
+    ///
+    /// Each scan gets placed into a body region.
+    /// Human view = homunculus (test coverage as sensitivity).
+    /// Membrane view = raw (line count / pub items).
+    /// Mixed = vitruvian ratio.
+    #[must_use]
+    pub fn from_scans(scans: &[super::stone_book::OrganismScan]) -> Self {
+        use std::collections::BTreeMap;
+
+        // Group organisms by body region
+        let mut grouped: BTreeMap<BodyRegion, Vec<&super::stone_book::OrganismScan>> =
+            BTreeMap::new();
+        for region in BodyRegion::all() {
+            grouped.insert(*region, Vec::new());
+        }
+        for scan in scans {
+            let region = organism_body_region(&scan.name);
+            grouped.entry(region).or_default().push(scan);
+        }
+
+        let parts = BodyRegion::all().iter().map(|region| {
+            let orgs = grouped.get(region).cloned().unwrap_or_default();
+            let names: Vec<String> = orgs.iter().map(|o| o.name.clone()).collect();
+
+            // Human perceive: sensitivity = test_coverage
+            let total_items: u64 = orgs.iter().map(|o| o.pub_items + o.priv_items).sum();
+            let total_tests: u64 = orgs.iter().map(|o| o.tests).sum();
+            let sensitivity = if total_items == 0 { 0.0 } else {
+                total_tests as f64 / total_items as f64
+            };
+            let mine = HomunculusWeight {
+                region: *region,
+                raw_size: total_items,
+                sensitivity,
+                apparent_size: total_items as f64 * sensitivity,
+            };
+
+            // Membrane perceive: raw line count as "size", no distortion
+            let total_lines: u64 = orgs.iter().map(|o| o.lines).sum();
+            let yours = HomunculusWeight {
+                region: *region,
+                raw_size: total_lines,
+                sensitivity: 1.0, // no distortion
+                apparent_size: total_lines as f64,
+            };
+
+            // Vitruvian: where mine and yours agree
+            let vr = if total_lines == 0 { 0.0 } else {
+                mine.apparent_size / total_lines as f64
+            };
+
+            BodyPart {
+                region: *region,
+                organisms: names,
+                mine,
+                yours,
+                vitruvian: vr,
+            }
+        }).collect();
+
+        PiBody {
+            organism_count: scans.len(),
+            parts,
+            shape: Shape::Hypersphere, // default to full view
+        }
+    }
+
+    /// Get a body part by region.
+    #[must_use]
+    pub fn part(&self, region: &BodyRegion) -> Option<&BodyPart> {
+        self.parts.iter().find(|p| &p.region == region)
+    }
+
+    /// The most distorted body part — where human and membrane disagree most.
+    /// This is where the system's perception is most different from its reality.
+    #[must_use]
+    pub fn most_distorted(&self) -> Option<&BodyPart> {
+        self.parts.iter()
+            .filter(|p| p.vitruvian > 0.0)
+            .max_by(|a, b| {
+                let da = (a.vitruvian - 1.0).abs();
+                let db = (b.vitruvian - 1.0).abs();
+                da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+            })
+    }
+
+    /// The most balanced body part — closest to Vitruvian proportion.
+    #[must_use]
+    pub fn most_balanced(&self) -> Option<&BodyPart> {
+        self.parts.iter()
+            .filter(|p| p.vitruvian > 0.0)
+            .min_by(|a, b| {
+                let da = (a.vitruvian - 1.0).abs();
+                let db = (b.vitruvian - 1.0).abs();
+                da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+            })
+    }
+
+    /// Summary: which body parts are over-built, under-built, or balanced?
+    #[must_use]
+    pub fn diagnosis(&self) -> Vec<(&BodyPart, &str)> {
+        self.parts.iter()
+            .filter(|p| p.vitruvian > 0.0)
+            .map(|p| {
+                let label = if p.vitruvian > 1.5 {
+                    "under-built (feels bigger than it is)"
+                } else if p.vitruvian < 0.5 {
+                    "over-built (bigger than it feels)"
+                } else {
+                    "balanced (Vitruvian)"
+                };
+                (p, label)
+            })
+            .collect()
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORD for BTreeMap usage
+// ═══════════════════════════════════════════════════════════════════════════
+
+impl PartialOrd for BodyRegion {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for BodyRegion {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (*self as u8).cmp(&(*other as u8))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_seven_body_regions() {
+        assert_eq!(BodyRegion::all().len(), 7, "7 body regions (like 7 pi scales)");
+    }
+
+    #[test]
+    fn test_cns_to_body() {
+        assert_eq!(BodyRegion::from_cns(&CnsType::Prefrontal), BodyRegion::Head);
+        assert_eq!(BodyRegion::from_cns(&CnsType::Sensory), BodyRegion::Eyes);
+        assert_eq!(BodyRegion::from_cns(&CnsType::Motor), BodyRegion::Hands);
+        assert_eq!(BodyRegion::from_cns(&CnsType::Autonomic), BodyRegion::Spine);
+        assert_eq!(BodyRegion::from_cns(&CnsType::Immune), BodyRegion::Skin);
+        assert_eq!(BodyRegion::from_cns(&CnsType::Cortex), BodyRegion::Feet);
+    }
+
+    #[test]
+    fn test_homunculus_distortion() {
+        // Hands have 100 items and 80 tests (high sensitivity = 0.8)
+        // Spine has 100 items and 10 tests (low sensitivity = 0.1)
+        // On the homunculus, hands appear 8× bigger than spine
+        let data = vec![
+            (BodyRegion::Hands, 100u64, 80u64),
+            (BodyRegion::Spine, 100, 10),
+        ];
+        let weights = homunculus_weights(&data);
+        assert!((weights[0].sensitivity - 0.8).abs() < 0.01);
+        assert!((weights[1].sensitivity - 0.1).abs() < 0.01);
+        // Apparent: hands = 80, spine = 10. Hands look 8× bigger.
+        assert!(weights[0].apparent_size > weights[1].apparent_size * 7.0);
+    }
+
+    #[test]
+    fn test_three_perceives() {
+        assert_eq!(Perceive::all().len(), 3);
+    }
+
+    #[test]
+    fn test_perceive_maps_to_glyph() {
+        use super::super::stone_book::Glyph;
+        assert_eq!(Perceive::Mine.glyph(), Glyph::Asserted);   // !
+        assert_eq!(Perceive::Yours.glyph(), Glyph::Unknown);   // ?
+        assert_eq!(Perceive::Mixed.glyph(), Glyph::Null);      // O
+    }
+
+    #[test]
+    fn test_shape_ladder() {
+        let ladder = Shape::ladder();
+        assert_eq!(ladder.len(), 7, "7 shapes in the ladder (like 7 pi scales)");
+        // Dimensions increase
+        assert!(ladder[0].dimensions() <= ladder[6].dimensions());
+    }
+
+    #[test]
+    fn test_shape_positions() {
+        assert_eq!(Shape::Circle.positions(), 7);
+        assert_eq!(Shape::Square.positions(), 49);
+        assert_eq!(Shape::Cube.positions(), 147);
+        assert_eq!(Shape::Tesseract.positions(), 441);
+        assert_eq!(Shape::Hypersphere.positions(), 1323);
+    }
+
+    #[test]
+    fn test_cube_is_bingo() {
+        // The cube (147) is the bingo cube
+        assert_eq!(Shape::Cube.positions(), 147);
+        assert_eq!(Shape::Cube.dimensions(), 3);
+    }
+
+    #[test]
+    fn test_hypersphere_is_full_stonebook() {
+        // The hypersphere (1323) is the full 5D stoneBook
+        assert_eq!(Shape::Hypersphere.positions(), 1323);
+        assert_eq!(Shape::Hypersphere.dimensions(), 5);
+    }
+
+    #[test]
+    fn test_wrapping_shapes() {
+        assert!(Shape::Circle.wraps(), "circle wraps");
+        assert!(!Shape::Square.wraps(), "square doesn't wrap");
+        assert!(Shape::Sphere.wraps(), "sphere wraps");
+        assert!(!Shape::Cube.wraps(), "cube doesn't wrap");
+        assert!(Shape::Hypersphere.wraps(), "hypersphere wraps");
+    }
+
+    #[test]
+    fn test_vitruvian_balance() {
+        // When apparent size equals raw size, ratio = 1.0 (Vitruvian)
+        let r = vitruvian_ratio(100.0, 100);
+        assert!((r - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_vitruvian_under_built() {
+        // Homunculus says bigger than scanner sees = under-built
+        let r = vitruvian_ratio(200.0, 100);
+        assert!(r > 1.0, "ratio > 1.0 = under-built");
+    }
+
+    #[test]
+    fn test_vitruvian_over_built() {
+        // Scanner says bigger than homunculus feels = over-built
+        let r = vitruvian_ratio(50.0, 100);
+        assert!(r < 1.0, "ratio < 1.0 = over-built");
+    }
+
+    #[test]
+    fn test_looks_like() {
+        assert!(Shape::Circle.looks_like().contains("ouroboros"));
+        assert!(Shape::Cube.looks_like().contains("dice"));
+        assert!(Shape::Hypersphere.looks_like().contains("stoneBook"));
+    }
+
+    #[test]
+    fn test_shape_ladder_positions_increase() {
+        let ladder = Shape::ladder();
+        // Not strictly increasing (tetrahedron < cube) but generally up
+        assert!(ladder[6].positions() > ladder[0].positions());
+    }
+
+    #[test]
+    fn test_banana_is_partial_ouroboros() {
+        assert_eq!(OrganicShape::Banana.pi_shape(), Shape::Circle);
+        assert!(OrganicShape::Banana.topology().contains("arc"));
+    }
+
+    #[test]
+    fn test_apple_is_torus() {
+        assert_eq!(OrganicShape::Apple.pi_shape(), Shape::Sphere);
+        assert!(OrganicShape::Apple.topology().contains("torus"));
+    }
+
+    #[test]
+    fn test_organism_body_mapping() {
+        assert_eq!(organism_body_region("bingoCube"), BodyRegion::Head);
+        assert_eq!(organism_body_region("squirrel"), BodyRegion::Eyes);
+        assert_eq!(organism_body_region("bearDog"), BodyRegion::Hands);
+        assert_eq!(organism_body_region("biomeOS"), BodyRegion::Spine);
+        assert_eq!(organism_body_region("swarmVine"), BodyRegion::Heart);
+        assert_eq!(organism_body_region("skunkBat"), BodyRegion::Skin);
+        assert_eq!(organism_body_region("toadStool"), BodyRegion::Feet);
+    }
+
+    #[test]
+    fn test_unknown_organism_defaults_to_spine() {
+        assert_eq!(organism_body_region("unknownThing"), BodyRegion::Spine);
+    }
+
+    #[test]
+    fn test_pi_body_from_scans() {
+        use super::super::stone_book::{OrganismScan, Polarity};
+        let scans = vec![
+            OrganismScan { name: "bearDog".into(),  lines: 72331,  crates: 33, tests: 11882, pub_items: 7955, priv_items: 7794, jelly: 49, wired: false, polarity: Polarity::Life },
+            OrganismScan { name: "toadStool".into(), lines: 244350, crates: 50, tests: 17551, pub_items: 7888, priv_items: 16581, jelly: 37, wired: false, polarity: Polarity::Life },
+        ];
+        let body = PiBody::from_scans(&scans);
+        assert_eq!(body.organism_count, 2);
+        assert_eq!(body.parts.len(), 7); // always 7 body regions
+
+        // bearDog → hands
+        let hands = body.part(&BodyRegion::Hands).unwrap();
+        assert!(hands.organisms.contains(&"bearDog".to_string()));
+        assert!(hands.mine.sensitivity > 0.0);
+
+        // toadStool → feet
+        let feet = body.part(&BodyRegion::Feet).unwrap();
+        assert!(feet.organisms.contains(&"toadStool".to_string()));
+    }
+
+    #[test]
+    fn test_pi_body_most_distorted() {
+        use super::super::stone_book::{OrganismScan, Polarity};
+        let scans = vec![
+            // High sensitivity (many tests relative to items)
+            OrganismScan { name: "songBird".into(), lines: 2679, crates: 32, tests: 10469, pub_items: 5584, priv_items: 8286, jelly: 58, wired: false, polarity: Polarity::Life },
+            // Low sensitivity
+            OrganismScan { name: "biomeOS".into(), lines: 311743, crates: 31, tests: 5482, pub_items: 3300, priv_items: 4442, jelly: 17, wired: false, polarity: Polarity::Life },
+        ];
+        let body = PiBody::from_scans(&scans);
+        let distorted = body.most_distorted();
+        assert!(distorted.is_some());
+    }
+
+    #[test]
+    fn test_pi_body_diagnosis() {
+        use super::super::stone_book::{OrganismScan, Polarity};
+        let scans = vec![
+            OrganismScan { name: "bearDog".into(), lines: 72331, crates: 33, tests: 11882, pub_items: 7955, priv_items: 7794, jelly: 49, wired: false, polarity: Polarity::Life },
+            OrganismScan { name: "biomeOS".into(), lines: 311743, crates: 31, tests: 5482, pub_items: 3300, priv_items: 4442, jelly: 17, wired: false, polarity: Polarity::Life },
+        ];
+        let body = PiBody::from_scans(&scans);
+        let diag = body.diagnosis();
+        // At least some regions should have a diagnosis
+        assert!(!diag.is_empty());
+        for (part, label) in &diag {
+            assert!(
+                label.contains("under-built") || label.contains("over-built") || label.contains("balanced"),
+                "diagnosis should classify: {}",
+                label
+            );
+        }
+    }
+
+    #[test]
+    fn test_seven_shapes_seven_regions_seven_scales() {
+        // The 7 keeps appearing: 7 body regions, 7 shapes, 7 π scales, 7 epitopes
+        assert_eq!(BodyRegion::all().len(), 7);
+        assert_eq!(Shape::ladder().len(), 7);
+        // This isn't coincidence. The body wraps the same 7 that π wraps.
+    }
+}
