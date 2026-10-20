@@ -18,6 +18,7 @@
 //! - `gaia_paper` — gAIa Paper 001: The Rust Polymerase. First publication.
 //! - `arktix` — arkTIX: permafrost preprint archive. Cold storage for info memes.
 //! - `proof_structure` — Theorem/Corollary/Conjecture/Proof. The mathematical stack.
+//! - `bounty_map` — π/i² reinvestment (Basel), funding sources, damage claims.
 
 pub mod core;
 pub mod pores;
@@ -31,6 +32,7 @@ pub mod pi_body;
 pub mod gaia_paper;
 pub mod arktix;
 pub mod proof_structure;
+pub mod bounty_map;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -47,3 +49,4 @@ pub use pi_body::*;
 pub use gaia_paper::*;
 pub use arktix::*;
 pub use proof_structure::*;
+pub use bounty_map::*;
