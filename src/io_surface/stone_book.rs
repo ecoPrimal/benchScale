@@ -649,8 +649,13 @@ pub enum Freedom {
     /// Movement through the 3 null forms (knot crossings).
     /// WHERE the 3 ouroboros snakes cross through each other.
     Null,
-    /// Movement through time (was → is → will_be). The arrow.
-    /// The ONLY axis that doesn't wrap. Time flows.
+    /// Movement through time (was ↔ is ↔ will_be ↔ isnt ↔ null).
+    /// LOCAL and DECENTRALIZED. Each observer has their own tense.
+    /// The grid uses 3 primary tenses (Was/Is/WillBe) for the 441-cell
+    /// tesseract. Isnt and Null are observer overlays.
+    ///
+    /// Tense CAN wrap: null → is → was → null. But it wraps through
+    /// the OBSERVER, not globally. The wrapping is local.
     Tense,
     /// Movement along the epistemic axis (! ↔ ? ↔ O). The third ouroboros.
     Epistemic,
@@ -676,17 +681,22 @@ impl Freedom {
             Self::Scale => 7,     // π⁻³ through π³
             Self::Epitope => 7,   // 7 epitope types
             Self::Null => 3,      // (null), NuLL, [null]
-            Self::Tense => 3,     // was, is, will_be
+            Self::Tense => 3,     // 3 PRIMARY (was, is, will_be) for the grid; 5 total with observer overlays
             Self::Epistemic => 3, // !, ?, O
         }
     }
 
     /// Does this axis wrap (ouroboros) or is it linear?
     ///
-    /// 3 axes wrap: scale, epitope, epistemic.
+    /// 3 axes wrap globally: scale, epitope, epistemic.
     /// They are the 3 ouroboros snakes of the trefoil knot.
     /// Null is where they cross (3 crossings = trefoil).
-    /// Tense is the only arrow — time doesn't loop.
+    ///
+    /// Tense wraps LOCALLY — through the observer. What's "is" here
+    /// can decay to "was", dissolve to "null", and re-emerge as "is"
+    /// somewhere else. The wrapping is observer-relative, not global.
+    /// On the 3-primary grid (Was/Is/WillBe), it doesn't wrap.
+    /// On the 5-value local view, it wraps through null.
     #[must_use]
     pub const fn wraps(&self) -> bool {
         match self {
@@ -694,7 +704,19 @@ impl Freedom {
             Self::Epitope => true,   // ouroboros 2 — life wraps to non-life at tuebor
             Self::Epistemic => true, // ouroboros 3 — ! → ? → O → !
             Self::Null => false,     // not a loop — the CROSSINGS of the 3 loops
-            Self::Tense => false,    // the arrow of time — only axis that doesn't loop
+            Self::Tense => false,    // on the PRIMARY grid, linear. Wraps locally through observer.
+        }
+    }
+
+    /// Does this axis wrap when viewed locally (from an observer)?
+    ///
+    /// Tense wraps locally: null → is → was → null.
+    /// The other wrapping axes still wrap globally.
+    #[must_use]
+    pub const fn wraps_locally(&self) -> bool {
+        match self {
+            Self::Tense => true,     // is → was → null → is (through the observer)
+            other => other.wraps(),  // global wrappers also wrap locally
         }
     }
 
@@ -1418,13 +1440,13 @@ mod tests {
     }
 
     #[test]
-    fn test_tense_is_only_arrow() {
-        // Time is the only axis that doesn't loop
-        let arrows: Vec<_> = Freedom::all().iter()
-            .filter(|f| !f.wraps() && **f != Freedom::Null)
-            .collect();
-        assert_eq!(arrows.len(), 1, "only tense is a pure arrow");
-        assert!(!Freedom::Tense.wraps());
+    fn test_tense_on_grid_is_arrow_but_wraps_locally() {
+        // On the primary grid, tense doesn't wrap (Was→Is→WillBe)
+        assert!(!Freedom::Tense.wraps(), "primary grid: linear");
+        // But locally (through the observer), tense wraps: null→is→was→null
+        assert!(Freedom::Tense.wraps_locally(), "local view: wraps through observer");
+        // Null is still non-wrapping (it's a crossing, not a loop)
+        assert!(!Freedom::Null.wraps_locally());
     }
 
     #[test]
