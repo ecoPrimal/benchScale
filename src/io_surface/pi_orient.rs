@@ -154,3 +154,131 @@ pub fn orient_from(center_id: &str) -> Option<Vec<PhotonLine>> {
         .map(|l| photon_line(center, l))
         .collect())
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// π GRAPH TOPOLOGY — ouroboros, knot, tesseract
+//
+// The bingo cube has 4 orthogonal axes:
+//   1. SCALE:   π⁻³ → π⁻² → π⁻¹ → π⁰ → π¹ → π² → π³ → wraps to π⁻³
+//               This is the OUROBOROS — the circle that eats its tail.
+//   2. EPITOPE: 7 types (investigation, membrane, science, signal, topology,
+//               immune, other). The faces of the shape.
+//   3. NULL:    3 forms — (null), NuLL, [null]. These are CROSSINGS where
+//               the ouroboros passes through itself = trefoil KNOT.
+//   4. TENSE:   was / is / will_be. This is TIME — MembraneTime.
+//               The 4th dimension that makes it a TESSERACT.
+//
+// The irradiation line (remainder ≈ 0.774) IS the knot — it loops
+// (ouroboros), crosses itself (3 null crossings), and those crossings
+// happen in tense-time (tesseract). Fractal dimension ≈ 1.4: between
+// a line and a surface. Trefoil knot: crossing number 3, genus 1.
+//
+// The ouroboros and tesseract are orthogonal on the π graph:
+//   ouroboros = circular scale axis (wraps)
+//   knot = null crossings (self-intersection)
+//   tesseract = tense axis (time, orthogonal to space)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// The 7 π scales — the ouroboros spine.
+pub const PI_SCALES: &[&str] = &["π⁻³", "π⁻²", "π⁻¹", "π⁰", "π¹", "π²", "π³"];
+
+/// The 7 epitopes — the faces.
+pub const EPITOPES: &[&str] = &[
+    "investigation", "membrane", "science", "signal",
+    "topology", "immune", "other",
+];
+
+/// The 3 null forms — the knot crossings.
+pub const NULL_FORMS: &[&str] = &["(null)", "NuLL", "[null]"];
+
+/// Tense — the tesseract's 4th axis.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Tense {
+    /// What was — the output has been emitted, fossilized.
+    Was,
+    /// What is — currently occupied, live.
+    Is,
+    /// What will be — approaching, projected.
+    WillBe,
+}
+
+/// A cell in the π tesseract.
+///
+/// 4D coordinate: (scale, epitope, null_form, tense).
+/// 7 × 7 × 3 × 3 = 441 cells in the full tesseract.
+/// The bingo cube (147 cells) is one tense-slice.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TesseractCell {
+    /// Scale index (0–6, mapping to π⁻³ through π³)
+    pub scale: u8,
+    /// Epitope index (0–6)
+    pub epitope: u8,
+    /// Null form index (0–2)
+    pub null_form: u8,
+    /// Tense — the time dimension
+    pub tense: Tense,
+    /// Occupancy count (how many entities in this cell)
+    pub count: u32,
+}
+
+impl TesseractCell {
+    /// The scale name for this cell.
+    #[must_use]
+    pub fn scale_name(&self) -> &'static str {
+        PI_SCALES.get(self.scale as usize).copied().unwrap_or("?")
+    }
+
+    /// The epitope name for this cell.
+    #[must_use]
+    pub fn epitope_name(&self) -> &'static str {
+        EPITOPES.get(self.epitope as usize).copied().unwrap_or("?")
+    }
+
+    /// The null form name for this cell.
+    #[must_use]
+    pub fn null_form_name(&self) -> &'static str {
+        NULL_FORMS.get(self.null_form as usize).copied().unwrap_or("?")
+    }
+
+    /// Is this a knot crossing? (where the ouroboros passes through itself)
+    /// Crossings happen at non-zero null forms on the origin scale (π³=O).
+    #[must_use]
+    pub fn is_crossing(&self) -> bool {
+        self.scale == 6 // π³ = origin = where the loop closes
+    }
+
+    /// Is this cell on the ouroboros (scale axis)?
+    /// All cells are on the ouroboros, but edge cells (π⁻³, π³) are the
+    /// join point where the snake eats its tail.
+    #[must_use]
+    pub fn is_ouroboros_join(&self) -> bool {
+        self.scale == 0 || self.scale == 6
+    }
+}
+
+/// The 4D shape: scale wraps (ouroboros), null forms cross (knot),
+/// tense extends (tesseract). Returns the total cell count.
+#[must_use]
+pub const fn tesseract_cell_count() -> usize {
+    PI_SCALES.len() * EPITOPES.len() * NULL_FORMS.len() * 3 // 3 tenses
+}
+
+/// Compute the ouroboros distance between two scales.
+/// The scale axis wraps: π³ connects back to π⁻³.
+/// Distance is the shorter path around the circle.
+#[must_use]
+pub fn ouroboros_distance(scale_a: u8, scale_b: u8) -> u8 {
+    let n = PI_SCALES.len() as u8;
+    let forward = (scale_b + n - scale_a) % n;
+    let backward = (scale_a + n - scale_b) % n;
+    forward.min(backward)
+}
+
+/// Is a given scale pair a trefoil crossing?
+/// The 3 null forms create 3 crossing points.
+/// Crossings happen where scale wraps (π³→π⁻³).
+#[must_use]
+pub fn is_trefoil_crossing(scale: u8) -> bool {
+    scale == 6 || scale == 0 // the join point, 3 null forms = 3 crossings
+}

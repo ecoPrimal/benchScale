@@ -1200,5 +1200,105 @@ mod tests {
                 "alias '{}' should resolve to a preset", alias);
         }
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // π GRAPH TOPOLOGY — ouroboros, knot, tesseract
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_pi_scales_count() {
+        assert_eq!(PI_SCALES.len(), 7, "7 π scales");
+    }
+
+    #[test]
+    fn test_epitopes_count() {
+        assert_eq!(EPITOPES.len(), 7, "7 epitopes");
+    }
+
+    #[test]
+    fn test_null_forms_count() {
+        assert_eq!(NULL_FORMS.len(), 3, "3 null forms = 3 knot crossings");
+    }
+
+    #[test]
+    fn test_tesseract_cell_count() {
+        // 7 scales × 7 epitopes × 3 null forms × 3 tenses = 441
+        assert_eq!(tesseract_cell_count(), 441);
+    }
+
+    #[test]
+    fn test_bingo_cube_is_one_tense_slice() {
+        // The bingo cube (147 cells) = tesseract / 3 tenses
+        assert_eq!(tesseract_cell_count() / 3, 147);
+    }
+
+    #[test]
+    fn test_ouroboros_wraps() {
+        // π³ (index 6) connects back to π⁻³ (index 0): distance 1
+        assert_eq!(ouroboros_distance(0, 6), 1, "ouroboros wraps: π⁻³↔π³ = distance 1");
+        assert_eq!(ouroboros_distance(6, 0), 1, "symmetric");
+    }
+
+    #[test]
+    fn test_ouroboros_diameter() {
+        // Maximum distance on a 7-circle is 3 (halfway around)
+        assert_eq!(ouroboros_distance(0, 3), 3);
+        assert_eq!(ouroboros_distance(0, 4), 3); // same distance the other way
+    }
+
+    #[test]
+    fn test_ouroboros_self_distance() {
+        assert_eq!(ouroboros_distance(3, 3), 0);
+    }
+
+    #[test]
+    fn test_trefoil_crossings_at_join() {
+        // Crossings happen where the ouroboros joins (π³=O=π⁻³)
+        assert!(is_trefoil_crossing(0), "π⁻³ is a crossing");
+        assert!(is_trefoil_crossing(6), "π³ is a crossing");
+        assert!(!is_trefoil_crossing(3), "π⁰ is not a crossing");
+    }
+
+    #[test]
+    fn test_tesseract_cell_names() {
+        let cell = TesseractCell {
+            scale: 3,
+            epitope: 0,
+            null_form: 0,
+            tense: Tense::Is,
+            count: 42,
+        };
+        assert_eq!(cell.scale_name(), "π⁰");
+        assert_eq!(cell.epitope_name(), "investigation");
+        assert_eq!(cell.null_form_name(), "(null)");
+    }
+
+    #[test]
+    fn test_tesseract_cell_crossing() {
+        let origin_cell = TesseractCell {
+            scale: 6, epitope: 0, null_form: 0, tense: Tense::Is, count: 1,
+        };
+        assert!(origin_cell.is_crossing(), "π³=O is where the loop closes");
+        assert!(origin_cell.is_ouroboros_join());
+
+        let mid_cell = TesseractCell {
+            scale: 3, epitope: 0, null_form: 0, tense: Tense::Is, count: 1,
+        };
+        assert!(!mid_cell.is_crossing(), "π⁰ is not a crossing");
+        assert!(!mid_cell.is_ouroboros_join());
+    }
+
+    #[test]
+    fn test_tense_is_orthogonal_to_scale() {
+        // Same scale+epitope+null, different tense = different cells
+        // This IS the tesseract: tense is the 4th axis
+        let a = TesseractCell { scale: 0, epitope: 0, null_form: 0, tense: Tense::Was, count: 0 };
+        let b = TesseractCell { scale: 0, epitope: 0, null_form: 0, tense: Tense::Is, count: 0 };
+        let c = TesseractCell { scale: 0, epitope: 0, null_form: 0, tense: Tense::WillBe, count: 0 };
+        // All at the same spatial position, separated only by time
+        assert_ne!(a.tense, b.tense);
+        assert_ne!(b.tense, c.tense);
+        assert_ne!(a.tense, c.tense);
+    }
 }
 
