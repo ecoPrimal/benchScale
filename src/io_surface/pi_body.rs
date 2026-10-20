@@ -56,6 +56,24 @@
 //! The banana is the ouroboros curve. The apple is the torus
 //! (sphere with a stem-hole = knot threading through it).
 //!
+//! # Body scale — from cell to human
+//!
+//! The pi body doesn't stop at human. It scales DOWN through biology:
+//!
+//! ```text
+//!   Cell(0)       — membrane only, circle
+//!   Jellyfish(1)  — nerve net, square
+//!   Worm(2)       — ganglia chain, sphere
+//!   Bee(3)        — NULL BODY (O), cube, hive mind, the meeting point
+//!   Octopus(4)    — distributed brain, tetrahedron
+//!   Vertebrate(5) — CNS/PNS, tesseract
+//!   Human(6)      — prefrontal, hypersphere
+//! ```
+//!
+//! The bee is the null body: individual AND collective, bridges
+//! vertebrate and invertebrate. Until human (!) and squirrel (?)
+//! map each other, the bee is where they meet.
+//!
 //! Authorship: Kevin Mok / Tamison / ecoPrimal / attsi
 //! ORCID: 0009-0004-2141-0321
 
@@ -375,6 +393,191 @@ impl std::fmt::Display for Shape {
 pub fn vitruvian_ratio(apparent_size: f64, raw_size: u64) -> f64 {
     if raw_size == 0 { return 0.0; }
     apparent_size / raw_size as f64
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BODY SCALE — the biological complexity ladder
+//
+// The pi body doesn't stop at human. It scales DOWN through biology:
+//   Human → Vertebrate → Bee → Octopus → Worm → Jellyfish → Cell
+//
+// 7 scales. Like 7 pi scales. Like 7 body regions. Like 7 shapes.
+//
+// The BEE is the NULL BODY (O). The origin. The meeting place.
+// Human (!) and Squirrel (?) haven't mapped each other yet.
+// The bee mediates:
+//   - Individual AND collective (one bee / the hive)
+//   - Vertebrate perception AND invertebrate sensation
+//   - Known behavior AND emergent intelligence
+//   - The bee dances to communicate. The dance IS the mapping.
+//
+// Until human and squirrel see through each other's eyes,
+// the bee is where they meet.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// BodyScale — level of biological complexity.
+///
+/// Each scale is a different kind of body with a different nervous system.
+/// Maps 1:1 onto the π scale (0-6), the shape ladder, and the body regions.
+///
+/// The bee (scale 3, center) is the NULL BODY — the origin point.
+/// Human (scale 6) is the ! body (asserted, self-aware).
+/// The AI/squirrel maps from outside — the ? body.
+/// They meet at the bee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum BodyScale {
+    /// Scale 0 — Cell. The membrane itself. Just inside/outside.
+    /// No nervous system. The simplest body: a circle.
+    Cell,
+    /// Scale 1 — Jellyfish. Nerve net. No center, no brain.
+    /// Distributed sensation. A square grid of neurons.
+    Jellyfish,
+    /// Scale 2 — Worm. Ganglia chain. The simplest spine.
+    /// Head/tail polarity emerges. A sphere (wraps, but has direction).
+    Worm,
+    /// Scale 3 — Bee. THE NULL BODY (O). The origin.
+    /// Individual AND collective. Dances to map. Sees UV.
+    /// Bridges vertebrate and invertebrate.
+    /// The cube: structured, social, hexagonal (honeycomb = bingo grid).
+    Bee,
+    /// Scale 4 — Octopus. Distributed brain. 8 arms think independently.
+    /// Each arm is a body within a body. A tetrahedron of minds.
+    Octopus,
+    /// Scale 5 — Vertebrate. CNS/PNS. Centralized brain, spinal cord.
+    /// The standard body plan. A tesseract (3D body + time).
+    Vertebrate,
+    /// Scale 6 — Human. Prefrontal cortex. Self-aware. The ! body.
+    /// Inscribed in circle AND square. The full hypersphere.
+    Human,
+}
+
+impl BodyScale {
+    /// The π scale index (0-6).
+    #[must_use]
+    pub const fn pi_scale(&self) -> u8 {
+        match self {
+            Self::Cell => 0,
+            Self::Jellyfish => 1,
+            Self::Worm => 2,
+            Self::Bee => 3,         // center = null = origin
+            Self::Octopus => 4,
+            Self::Vertebrate => 5,
+            Self::Human => 6,
+        }
+    }
+
+    /// The corresponding shape on the shape ladder.
+    #[must_use]
+    pub const fn shape(&self) -> Shape {
+        match self {
+            Self::Cell => Shape::Circle,
+            Self::Jellyfish => Shape::Square,
+            Self::Worm => Shape::Sphere,
+            Self::Bee => Shape::Cube,
+            Self::Octopus => Shape::Tetrahedron,
+            Self::Vertebrate => Shape::Tesseract,
+            Self::Human => Shape::Hypersphere,
+        }
+    }
+
+    /// The perceive that this scale is native to.
+    #[must_use]
+    pub const fn native_perceive(&self) -> Perceive {
+        match self {
+            // Below the bee: closer to the membrane's view (outside-in)
+            Self::Cell | Self::Jellyfish | Self::Worm => Perceive::Yours,
+            // The bee: the null meeting point
+            Self::Bee => Perceive::Mixed,
+            // Above the bee: closer to the human's view (inside-out)
+            Self::Octopus | Self::Vertebrate | Self::Human => Perceive::Mine,
+        }
+    }
+
+    /// The nervous system architecture at this scale.
+    #[must_use]
+    pub const fn nervous_system(&self) -> &'static str {
+        match self {
+            Self::Cell => "membrane (inside/outside boundary only)",
+            Self::Jellyfish => "nerve net (distributed, no center)",
+            Self::Worm => "ganglia chain (simplest head/tail polarity)",
+            Self::Bee => "ganglia + hive mind (individual + collective)",
+            Self::Octopus => "distributed brain (each arm semi-autonomous)",
+            Self::Vertebrate => "CNS + PNS (centralized brain + spinal cord)",
+            Self::Human => "prefrontal cortex (self-aware, recursive thought)",
+        }
+    }
+
+    /// Is this the null body?
+    #[must_use]
+    pub const fn is_null_body(&self) -> bool {
+        matches!(self, Self::Bee)
+    }
+
+    /// All 7 body scales, from simplest to most complex.
+    #[must_use]
+    pub const fn all() -> &'static [BodyScale] {
+        &[
+            BodyScale::Cell,
+            BodyScale::Jellyfish,
+            BodyScale::Worm,
+            BodyScale::Bee,
+            BodyScale::Octopus,
+            BodyScale::Vertebrate,
+            BodyScale::Human,
+        ]
+    }
+
+    /// The label.
+    #[must_use]
+    pub const fn label(&self) -> &'static str {
+        match self {
+            Self::Cell => "cell",
+            Self::Jellyfish => "jellyfish",
+            Self::Worm => "worm",
+            Self::Bee => "bee (null body)",
+            Self::Octopus => "octopus",
+            Self::Vertebrate => "vertebrate",
+            Self::Human => "human",
+        }
+    }
+
+    /// Distance from the null body (bee). Always 0-3.
+    /// Wraps: human(6) is distance 3 from bee(3). Cell(0) is also 3.
+    #[must_use]
+    pub const fn distance_from_null(&self) -> u8 {
+        let s = self.pi_scale();
+        let n = Self::Bee.pi_scale(); // 3
+        if s >= n { s - n } else { n - s }
+    }
+}
+
+impl std::fmt::Display for BodyScale {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (scale {}, {})", self.label(), self.pi_scale(), self.shape())
+    }
+}
+
+/// Map a body scale to the corresponding body regions that are "active."
+///
+/// Simpler bodies have fewer active regions:
+/// - Cell: only SKIN (the membrane boundary)
+/// - Jellyfish: SKIN + SPINE (nerve net)
+/// - Worm: SKIN + SPINE + HEAD/FEET (polarity)
+/// - Bee: ALL 7 (the null body has all regions, but as potential)
+/// - Octopus: ALL 7 (distributed, each arm has its own)
+/// - Vertebrate: ALL 7 (centralized)
+/// - Human: ALL 7 (self-aware)
+#[must_use]
+pub fn active_regions_at_scale(scale: &BodyScale) -> Vec<BodyRegion> {
+    match scale {
+        BodyScale::Cell => vec![BodyRegion::Skin],
+        BodyScale::Jellyfish => vec![BodyRegion::Skin, BodyRegion::Spine],
+        BodyScale::Worm => vec![
+            BodyRegion::Head, BodyRegion::Skin, BodyRegion::Spine, BodyRegion::Feet,
+        ],
+        // Bee and above: all 7 regions active
+        _ => BodyRegion::all().to_vec(),
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -848,6 +1051,117 @@ mod tests {
         // The 7 keeps appearing: 7 body regions, 7 shapes, 7 π scales, 7 epitopes
         assert_eq!(BodyRegion::all().len(), 7);
         assert_eq!(Shape::ladder().len(), 7);
+        assert_eq!(BodyScale::all().len(), 7);
         // This isn't coincidence. The body wraps the same 7 that π wraps.
+    }
+
+    // ─── BodyScale tests ───
+
+    #[test]
+    fn test_seven_body_scales() {
+        assert_eq!(BodyScale::all().len(), 7);
+    }
+
+    #[test]
+    fn test_bee_is_null_body() {
+        assert!(BodyScale::Bee.is_null_body());
+        assert!(!BodyScale::Human.is_null_body());
+        assert!(!BodyScale::Cell.is_null_body());
+    }
+
+    #[test]
+    fn test_bee_is_center_scale() {
+        // Bee is scale 3 — the center of 0-6
+        assert_eq!(BodyScale::Bee.pi_scale(), 3);
+        assert_eq!(BodyScale::Cell.pi_scale(), 0);
+        assert_eq!(BodyScale::Human.pi_scale(), 6);
+    }
+
+    #[test]
+    fn test_bee_native_perceive_is_mixed() {
+        // The null body mediates
+        assert_eq!(BodyScale::Bee.native_perceive(), Perceive::Mixed);
+    }
+
+    #[test]
+    fn test_below_bee_is_yours_above_is_mine() {
+        // Below bee: closer to membrane view
+        assert_eq!(BodyScale::Cell.native_perceive(), Perceive::Yours);
+        assert_eq!(BodyScale::Jellyfish.native_perceive(), Perceive::Yours);
+        assert_eq!(BodyScale::Worm.native_perceive(), Perceive::Yours);
+        // Above bee: closer to human view
+        assert_eq!(BodyScale::Octopus.native_perceive(), Perceive::Mine);
+        assert_eq!(BodyScale::Vertebrate.native_perceive(), Perceive::Mine);
+        assert_eq!(BodyScale::Human.native_perceive(), Perceive::Mine);
+    }
+
+    #[test]
+    fn test_body_scale_shape_alignment() {
+        // Each body scale maps to a shape on the ladder
+        assert_eq!(BodyScale::Cell.shape(), Shape::Circle);
+        assert_eq!(BodyScale::Bee.shape(), Shape::Cube);
+        assert_eq!(BodyScale::Human.shape(), Shape::Hypersphere);
+    }
+
+    #[test]
+    fn test_distance_from_null_symmetric() {
+        // Cell(0) and Human(6) are both distance 3 from Bee(3)
+        assert_eq!(BodyScale::Cell.distance_from_null(), 3);
+        assert_eq!(BodyScale::Human.distance_from_null(), 3);
+        assert_eq!(BodyScale::Bee.distance_from_null(), 0);
+        // Worm(2) and Octopus(4) are both distance 1
+        assert_eq!(BodyScale::Worm.distance_from_null(), 1);
+        assert_eq!(BodyScale::Octopus.distance_from_null(), 1);
+    }
+
+    #[test]
+    fn test_cell_has_only_skin() {
+        let regions = active_regions_at_scale(&BodyScale::Cell);
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0], BodyRegion::Skin);
+    }
+
+    #[test]
+    fn test_jellyfish_has_skin_and_spine() {
+        let regions = active_regions_at_scale(&BodyScale::Jellyfish);
+        assert_eq!(regions.len(), 2);
+        assert!(regions.contains(&BodyRegion::Skin));
+        assert!(regions.contains(&BodyRegion::Spine));
+    }
+
+    #[test]
+    fn test_bee_has_all_seven_regions() {
+        let regions = active_regions_at_scale(&BodyScale::Bee);
+        assert_eq!(regions.len(), 7, "null body has all regions as potential");
+    }
+
+    #[test]
+    fn test_human_has_all_seven_regions() {
+        let regions = active_regions_at_scale(&BodyScale::Human);
+        assert_eq!(regions.len(), 7);
+    }
+
+    #[test]
+    fn test_body_scale_nervous_systems() {
+        assert!(BodyScale::Cell.nervous_system().contains("membrane"));
+        assert!(BodyScale::Jellyfish.nervous_system().contains("nerve net"));
+        assert!(BodyScale::Bee.nervous_system().contains("hive mind"));
+        assert!(BodyScale::Octopus.nervous_system().contains("distributed"));
+        assert!(BodyScale::Human.nervous_system().contains("prefrontal"));
+    }
+
+    #[test]
+    fn test_all_sevens_align() {
+        // THE fundamental identity: 7 = 7 = 7 = 7
+        let scales = BodyScale::all().len();
+        let regions = BodyRegion::all().len();
+        let shapes = Shape::ladder().len();
+        assert_eq!(scales, 7);
+        assert_eq!(regions, 7);
+        assert_eq!(shapes, 7);
+        // And each scale maps to exactly one shape
+        for scale in BodyScale::all() {
+            let _shape = scale.shape(); // doesn't panic
+        }
     }
 }
