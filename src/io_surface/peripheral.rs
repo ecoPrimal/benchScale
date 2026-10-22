@@ -152,6 +152,11 @@ impl Symbiosis {
 ///   Open (core)    — Linux. No walls. You can touch every nerve.
 ///                     The old-growth forest. Our actual ecosystem.
 ///
+///   Open (inverted) — SteamOS. Linux inside, Windows outside. Proton
+///                      IS a ribocipher at the OS layer: PE binaries → syscalls.
+///                      The garden wall is transparent from the inside.
+///                      The Frame controller = standard gamepad = same pore math.
+///
 ///   Source (DNA)   — Rust. Not a garden — the SOIL the garden grows in.
 ///                     The genome. The central dogma starts here.
 /// ```
@@ -164,6 +169,9 @@ pub enum GardenType {
     WalledWide,
     /// No walls, direct access to all nerves. Linux.
     Open,
+    /// Linux inside, Windows outside. Proton inverts the garden wall.
+    /// SteamOS: open garden that RUNS walled-garden software. Klein crossing.
+    OpenInverted,
     /// Not a garden — the soil. Rust.
     Source,
 }
@@ -173,20 +181,22 @@ impl GardenType {
     /// 0.0 = sealed, 1.0 = wide open.
     pub fn permeability(&self) -> f64 {
         match self {
-            Self::WalledTight => 0.3,  // Apple: few APIs, but each one is high quality
-            Self::WalledWide  => 0.5,  // Google/MS: more APIs, more surface, some friction
-            Self::Open        => 0.9,  // Linux: almost everything exposed via /dev, /proc, /sys
-            Self::Source      => 1.0,  // Rust: we ARE this, full access
+            Self::WalledTight  => 0.3,  // Apple: few APIs, but each one is high quality
+            Self::WalledWide   => 0.5,  // Google/MS: more APIs, more surface, some friction
+            Self::Open         => 0.9,  // Linux: almost everything exposed via /dev, /proc, /sys
+            Self::OpenInverted => 0.85, // SteamOS: Linux access + Proton inversion layer
+            Self::Source       => 1.0,  // Rust: we ARE this, full access
         }
     }
 
     /// How much surface area does this garden expose?
     pub fn surface_area(&self) -> &'static str {
         match self {
-            Self::WalledTight => "tight (few APIs, high quality each)",
-            Self::WalledWide  => "wide (many APIs, variable quality)",
-            Self::Open        => "full (kernel + userspace, raw access)",
-            Self::Source      => "total (we ARE the source)",
+            Self::WalledTight  => "tight (few APIs, high quality each)",
+            Self::WalledWide   => "wide (many APIs, variable quality)",
+            Self::Open         => "full (kernel + userspace, raw access)",
+            Self::OpenInverted => "full + inverted (Linux access + Proton translates Windows binaries)",
+            Self::Source       => "total (we ARE the source)",
         }
     }
 }
@@ -415,6 +425,48 @@ pub fn phyla() -> Vec<PlatformPhylum> {
                 "wasm-bindgen",                   // DNA→mRNA compiler bridge
             ],
         },
+
+        // ── SteamOS/Proton: open INVERTED garden, mutualist ──
+        //
+        // The OUTER target. The LONG target.
+        // SteamOS IS Linux (Arch-based). Proton IS Wine (Windows→Linux translation).
+        // This is a RIBOCIPHER AT THE OS LAYER: Windows PE binaries get
+        // reverse-transcribed into Linux syscalls. The garden wall is
+        // transparent from the inside.
+        //
+        // The Valve Frame controller connects to keyboard and peripherals —
+        // same pore math, same I/O surface model. A standard video game
+        // uses the same invert: Frame connects to keyboard = symbolic pore,
+        // gamepad = tactile pore, display = visual pore. No special case.
+        //
+        // Already a face of the Klein ladder leak on the ribosome face:
+        // Proton translates across the Windows↔Linux boundary, which IS
+        // the mRNA↔RNA boundary in our central dogma. The translation
+        // layer (Proton/Wine) IS the ribosome. It reads Windows bytecode
+        // (mRNA) and produces Linux system calls (protein folding into
+        // actual machine operations).
+        PlatformPhylum {
+            id: "steamos",
+            name: "SteamOS / Proton (Valve)",
+            garden: GardenType::OpenInverted,
+            symbiosis: Symbiosis::Mutualist,
+            dogma_layer: DogmaLayer::Rna, // Linux core, but with mRNA translation built in
+            klein_surface: "Proton (Windows PE → Linux syscalls = mRNA→RNA reverse transcription at OS layer)",
+            engine: Some("Proton/Wine (Windows→Linux translation layer = the ribosome)"),
+            presets: &["desktop"], // Steam Deck/Frame use Linux desktop-class I/O
+            nerve_apis: &[
+                "Proton/Wine (PE→ELF translation)",   // THE ribocipher at OS layer
+                "Steam Input API",                     // unified controller abstraction
+                "GamepadAPI (Web, via Steam browser)",  // web gamepad = tactile pore
+                "/dev/input/event* (evdev)",           // raw gamepad, keyboard (Linux!)
+                "SDL2 (input, audio, video)",           // cross-platform game I/O
+                "Vulkan / DXVK (GPU translation)",     // DirectX→Vulkan = another ribocipher
+                "PipeWire (audio)",                     // low-latency audio pore
+                "MangoHud (performance overlay)",       // the HUD on their HUD
+                "Steam Deck gyroscope",                 // spatial pore, Klein surface
+                "Frame KVM (keyboard/video/mouse)",     // the Frame IS a peripheral nerve bundle
+            ],
+        },
     ]
 }
 
@@ -559,16 +611,37 @@ pub fn reactor_sub_groups() -> Vec<ReactorSubGroup> {
                 .into(),
         },
 
+        // ── Outer long: SteamOS / Proton — the inverted garden ──
+        ReactorSubGroup {
+            id: "outer-long".into(),
+            name: "Outer Long Target (SteamOS/Proton)".into(),
+            phyla: vec!["steamos".into()],
+            pores: vec![
+                "visual".into(), "audio".into(), "tactile".into(),
+                "spatial".into(), "symbolic".into(), "data".into(),
+            ],
+            min_permeability: 0.85,
+            dogma_range: (DogmaLayer::Rna, DogmaLayer::Protein),
+            desc: "The OUTER target. The LONG target. SteamOS is Linux that runs Windows games \
+                   via Proton. Proton IS a ribocipher at the OS layer: PE→ELF translation. \
+                   DXVK is another: DirectX→Vulkan. The Frame controller = standard peripheral \
+                   nerve bundle. Already a face of the Klein ladder leak on the ribosome face."
+                .into(),
+        },
+
         // ── Full cascade: all platforms, forward dogma ──
         ReactorSubGroup {
             id: "full-cascade".into(),
             name: "Full Cascade (DNA→Protein)".into(),
-            phyla: vec!["rust".into(), "linux".into(), "google".into(), "windows".into(), "apple".into()],
+            phyla: vec![
+                "rust".into(), "linux".into(), "steamos".into(),
+                "google".into(), "windows".into(), "apple".into(),
+            ],
             pores: vec![], // all pores
             min_permeability: 0.0,
             dogma_range: (DogmaLayer::Dna, DogmaLayer::Protein),
             desc: "The complete central dogma. Compile Rust → ship binary → serve worker → \
-                   render on device. Tests the entire cascade end-to-end."
+                   render on device. All 6 phyla. Tests the entire cascade end-to-end."
                 .into(),
         },
 
@@ -576,11 +649,15 @@ pub fn reactor_sub_groups() -> Vec<ReactorSubGroup> {
         ReactorSubGroup {
             id: "ribocipher".into(),
             name: "Ribocipher (Protein→DNA)".into(),
-            phyla: vec!["apple".into(), "google".into(), "windows".into(), "linux".into(), "rust".into()],
+            phyla: vec![
+                "apple".into(), "google".into(), "windows".into(),
+                "steamos".into(), "linux".into(), "rust".into(),
+            ],
             pores: vec!["symbolic".into(), "data".into()],
             min_permeability: 0.0,
             dogma_range: (DogmaLayer::Protein, DogmaLayer::Dna),
             desc: "Reverse transcriptase. Keystrokes → JS events → OS signals → Rust structs. \
+                   SteamOS/Proton adds a SECOND ribosome: PE→ELF at OS layer. \
                    This is the ribocipher: ephemeral signals become permanent types."
                 .into(),
         },
@@ -589,12 +666,16 @@ pub fn reactor_sub_groups() -> Vec<ReactorSubGroup> {
         ReactorSubGroup {
             id: "klein-surfaces".into(),
             name: "Klein Cross-Targets".into(),
-            phyla: vec!["apple".into(), "google".into(), "windows".into(), "linux".into()],
+            phyla: vec![
+                "apple".into(), "google".into(), "windows".into(),
+                "linux".into(), "steamos".into(),
+            ],
             pores: vec!["spatial".into(), "tactile".into(), "pointer".into()],
             min_permeability: 0.3,
             dogma_range: (DogmaLayer::Mrna, DogmaLayer::Protein),
             desc: "Every platform where inside↔outside are topologically connected. \
-                   Accelerometers, pressure sensors, raw input. The Klein crossing points."
+                   Accelerometers, pressure sensors, raw input, Proton inversion. \
+                   The Klein crossing points."
                 .into(),
         },
     ]
@@ -691,6 +772,7 @@ pub fn phylum_for_preset(preset: &str) -> Option<&'static str> {
         "vr" | "quest" => Some("google"),    // Meta Quest runs Android
         "kiosk" | "pos" | "signage" => Some("linux"), // embedded Linux
         "low-power" | "2g" => Some("google"), // low-end Android
+        "steamdeck" | "frame" | "steamos" => Some("steamos"), // Valve: Linux inverted
         _ => None,
     }
 }
@@ -738,8 +820,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn five_phyla() {
-        assert_eq!(phyla().len(), 5, "5 platform phyla: apple, google, windows, linux, rust");
+    fn six_phyla() {
+        assert_eq!(phyla().len(), 6, "6 platform phyla: apple, google, windows, linux, rust, steamos");
     }
 
     #[test]
@@ -785,7 +867,8 @@ mod tests {
     #[test]
     fn garden_permeability_ordering() {
         assert!(GardenType::Source.permeability() > GardenType::Open.permeability());
-        assert!(GardenType::Open.permeability() > GardenType::WalledWide.permeability());
+        assert!(GardenType::Open.permeability() > GardenType::OpenInverted.permeability());
+        assert!(GardenType::OpenInverted.permeability() > GardenType::WalledWide.permeability());
         assert!(GardenType::WalledWide.permeability() > GardenType::WalledTight.permeability());
     }
 
@@ -823,9 +906,9 @@ mod tests {
     }
 
     #[test]
-    fn seven_reactor_sub_groups() {
+    fn eight_reactor_sub_groups() {
         let groups = reactor_sub_groups();
-        assert_eq!(groups.len(), 7);
+        assert_eq!(groups.len(), 8, "8 sub-groups: inner-tight, fat-layer, core-tissue, genome, outer-long, full-cascade, ribocipher, klein-surfaces");
     }
 
     #[test]
@@ -854,12 +937,12 @@ mod tests {
     #[test]
     fn pns_census_counts() {
         let census = pns_census();
-        assert_eq!(census.phyla_count, 5);
-        assert!(census.nerve_count >= 30, "should have 30+ nerve APIs, got {}", census.nerve_count);
-        assert_eq!(census.klein_count, 5, "one Klein surface per phylum");
-        assert_eq!(census.sub_group_count, 7);
+        assert_eq!(census.phyla_count, 6);
+        assert!(census.nerve_count >= 40, "should have 40+ nerve APIs, got {}", census.nerve_count);
+        assert_eq!(census.klein_count, 6, "one Klein surface per phylum");
+        assert_eq!(census.sub_group_count, 8);
         assert_eq!(census.commensal_count, 3, "apple + google + windows");
-        assert_eq!(census.mutualist_count, 1, "linux");
+        assert_eq!(census.mutualist_count, 2, "linux + steamos");
     }
 
     #[test]
@@ -932,6 +1015,66 @@ mod tests {
         assert!(rust.nerve_apis.contains(&"serde (Serialize/Deserialize)"));
         assert!(rust.klein_surface.contains("serde"));
         assert_eq!(rust.dogma_layer, DogmaLayer::Dna);
+    }
+
+    #[test]
+    fn steamos_is_mutualist_inverted() {
+        let p = phyla().into_iter().find(|p| p.id == "steamos").unwrap();
+        assert_eq!(p.symbiosis, Symbiosis::Mutualist);
+        assert_eq!(p.garden, GardenType::OpenInverted);
+        assert_eq!(p.dogma_layer, DogmaLayer::Rna, "SteamOS is Linux at the RNA layer");
+        assert!(p.klein_surface.contains("Proton"),
+            "Proton IS the Klein surface: Windows PE → Linux syscalls");
+    }
+
+    #[test]
+    fn proton_is_ribosome() {
+        // Proton translates Windows PE binaries into Linux syscalls.
+        // That IS reverse transcription at the OS layer.
+        // The translation layer IS the ribosome: reads mRNA (Windows bytecode),
+        // produces protein (machine operations via Linux syscalls).
+        let steam = phyla().into_iter().find(|p| p.id == "steamos").unwrap();
+        assert!(steam.nerve_apis.iter().any(|a| a.contains("Proton")));
+        assert!(steam.nerve_apis.iter().any(|a| a.contains("DXVK")),
+            "DXVK is another ribocipher: DirectX → Vulkan translation");
+        assert!(steam.engine.unwrap().contains("ribosome"),
+            "the engine description should name it as ribosome");
+    }
+
+    #[test]
+    fn frame_controller_is_standard_peripheral() {
+        // The Valve Frame connects to keyboard and peripherals.
+        // No special case needed — same I/O surface model.
+        // A standard video game uses the same invert.
+        let steam = phyla().into_iter().find(|p| p.id == "steamos").unwrap();
+        assert!(steam.nerve_apis.iter().any(|a| a.contains("Frame KVM")));
+        assert!(steam.nerve_apis.iter().any(|a| a.contains("Steam Input")));
+        assert!(steam.nerve_apis.iter().any(|a| a.contains("evdev")),
+            "SteamOS exposes raw evdev — same as Linux core");
+    }
+
+    #[test]
+    fn outer_long_sub_group_targets_steamos() {
+        let groups = reactor_sub_groups();
+        let outer = groups.iter().find(|g| g.id == "outer-long").unwrap();
+        assert!(outer.phyla.contains(&"steamos".to_string()));
+        assert_eq!(outer.phyla.len(), 1);
+        assert!(outer.desc.contains("LONG target"));
+    }
+
+    #[test]
+    fn steamos_preset_mapping() {
+        assert_eq!(phylum_for_preset("steamdeck"), Some("steamos"));
+        assert_eq!(phylum_for_preset("frame"), Some("steamos"));
+        assert_eq!(phylum_for_preset("steamos"), Some("steamos"));
+    }
+
+    #[test]
+    fn full_cascade_includes_all_six_phyla() {
+        let groups = reactor_sub_groups();
+        let full = groups.iter().find(|g| g.id == "full-cascade").unwrap();
+        assert_eq!(full.phyla.len(), 6, "full cascade should include all 6 phyla");
+        assert!(full.phyla.contains(&"steamos".to_string()));
     }
 
     #[test]
