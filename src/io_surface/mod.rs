@@ -39,6 +39,7 @@ pub mod bounty_map;
 pub mod evolution_pressure;
 pub mod human_resort;
 pub mod temporal_device;
+pub mod peripheral;
 
 // Re-export everything at the io_surface level for backward compatibility.
 // All existing `use io_surface::Foo` paths continue to work.
@@ -59,3 +60,4 @@ pub use bounty_map::*;
 pub use evolution_pressure::*;
 pub use human_resort::*;
 pub use temporal_device::*;
+pub use peripheral::*;
